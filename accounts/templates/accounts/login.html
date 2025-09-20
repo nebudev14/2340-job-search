@@ -1,0 +1,28 @@
+<!-- templates/login.html -->
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Login</title>
+  </head>
+  <body>
+    <h2>Login</h2>
+
+    <!-- Display form errors if any -->
+    {% if form.errors %}
+    <ul style="color: red">
+      {% for field in form %} {% for error in field.errors %}
+      <li>{{ error }}</li>
+      {% endfor %} {% endfor %} {% for error in form.non_field_errors %}
+      <li>{{ error }}</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+
+    <form method="post">
+      {% csrf_token %} {{ form.as_p }}
+      <!-- Renders username and password fields -->
+      <button type="submit">Login</button>
+    </form>
+  </body>
+</html>

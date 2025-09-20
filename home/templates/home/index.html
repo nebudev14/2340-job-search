@@ -55,12 +55,12 @@
                 <li><a class="dropdown-item" href="#"><i class="fas fa-bookmark me-2"></i>Saved Jobs</a></li>
                 <li><a class="dropdown-item" href="#"><i class="fas fa-file-alt me-2"></i>Applications</a></li>
                 <li><hr class="dropdown-divider"></li>
-                <li><a class="dropdown-item" href="#"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
+                <li><a class="dropdown-item" href="{% url 'accounts.logout' %}"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
               </ul>
             </div>
             {% else %}
-            <a class="btn btn-outline-primary me-2" href="#"><i class="fas fa-sign-in-alt me-1"></i>Login</a>
-            <a class="btn btn-primary" href="#"><i class="fas fa-user-plus me-1"></i>Sign Up</a>
+            <a class="btn btn-outline-primary me-2" href="{% url 'accounts.login' %}"><i class="fas fa-sign-in-alt me-1"></i>Login</a>
+            <a class="btn btn-primary" href="{% url 'accounts.signup' %}"><i class="fas fa-user-plus me-1"></i>Sign Up</a>
             {% endif %}
           </div>
         </div>
