@@ -1,0 +1,171 @@
+<div class="form-row-item mb-3">
+{% if prefix == 'skills' %}
+    <div>
+        <label for="{{ form.name.id_for_label }}" class="form-label mb-1">{{ form.name.label }}</label>
+        <div class="d-flex align-items-center">
+            <div class="flex-grow-1 me-2">
+            {{ form.name }}
+            </div>
+        {% if form.instance.pk %}
+            <button type="button" class="btn btn-sm btn-outline-danger remove-form-row"
+                    hx-delete="{% url 'manage_form_rows' formset_name=prefix %}?object_id={{ form.instance.pk }}"
+                    hx-target="closest .form-row-item"
+                    hx-swap="outerHTML">
+                <i class="fas fa-trash-alt"></i>
+            </button>
+        {% else %}
+            <button type="button" class="btn btn-sm btn-outline-danger remove-form-row"
+                    onclick="
+                        // This is a new, unsaved form. Deletion is a client-side only action.
+                        // 1. Find the form row to remove it from the DOM.
+                        // 2. Find the management form and decrement the TOTAL_FORMS count.
+                        // 3. Remove the form row.
+                        const formRow = this.closest('.form-row-item');
+                        const totalFormsInput = document.querySelector('#id_{{ prefix }}-TOTAL_FORMS');
+                        if (totalFormsInput) totalFormsInput.value = parseInt(totalFormsInput.value) - 1;
+                        formRow.remove();
+                    ">
+                <i class="fas fa-trash-alt"></i>
+            </button>
+        {% endif %}
+        </div>
+    </div>
+    {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+{% elif prefix == 'education' %}
+    <div class="p-3 border rounded bg-light position-relative">
+        <button type="button" class="btn btn-sm btn-outline-danger remove-form-row position-absolute top-0 end-0 mt-2 me-2"
+                {% if form.instance.pk %}
+                    hx-delete="{% url 'manage_form_rows' formset_name=prefix %}?object_id={{ form.instance.pk }}"
+                    hx-target="closest .form-row-item"
+                    hx-swap="outerHTML">
+                {% else %}
+                    onclick="
+                        // This is a new, unsaved form. Deletion is a client-side only action.
+                        // 1. Find the form row to remove it from the DOM.
+                        // 2. Find the management form and decrement the TOTAL_FORMS count.
+                        // 3. Remove the form row.
+                        const formRow = this.closest('.form-row-item');
+                        const totalFormsInput = document.querySelector('#id_{{ prefix }}-TOTAL_FORMS');
+                        if (totalFormsInput) totalFormsInput.value = parseInt(totalFormsInput.value) - 1;
+                        hormRow.remove();
+                    "
+                {% endif %}
+             <i class="fas fa-trash-alt"></i>
+         </button>
+        <h5 class="fw-bold">Entry #<span class="entry-index">{% if form.instance.pk %}{{ forloop.counter }}{% else %}__prefix__{% endif %}</span></h5>
+        <div class="row">
+            <div class="col-md-12 mb-3">
+                <label for="{{ form.school.id_for_label }}" class="form-label mb-1">{{ form.school.label }}</label>
+                {{ form.school }}
+            </div>
+            <div class="col-md-6 mb-3">
+                <label for="{{ form.degree.id_for_label }}" class="form-label mb-1">{{ form.degree.label }}</label>
+                {{ form.degree }}
+            </div>
+            <div class="col-md-6 mb-3">
+                <label for="{{ form.field_of_study.id_for_label }}" class="form-label mb-1">{{ form.field_of_study.label }}</label>
+                {{ form.field_of_study }}
+            </div>
+            <div class="col-md-6 mb-3">
+                <label for="{{ form.start_year.id_for_label }}" class="form-label mb-1">{{ form.start_year.label }}</label>
+                {{ form.start_year }}
+            </div>
+            <div class="col-md-6 mb-3">
+                <label for="{{ form.end_year.id_for_label }}" class="form-label mb-1">{{ form.end_year.label }}</label>
+                {{ form.end_year }}
+            </div>
+        </div>
+        {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+    </div>
+{% elif prefix == 'experience' %}
+    <div class="p-3 border rounded bg-light position-relative">
+        <button type="button" class="btn btn-sm btn-outline-danger remove-form-row position-absolute top-0 end-0 mt-2 me-2"
+                {% if form.instance.pk %}
+                    hx-delete="{% url 'manage_form_rows' formset_name=prefix %}?object_id={{ form.instance.pk }}"
+                    hx-target="closest .form-row-item"
+                    hx-swap="outerHTML">
+                {% else %}
+                    onclick="
+                        // This is a new, unsaved form. Deletion is a client-side only action.
+                        // 1. Find the form row to remove it from the DOM.
+                        // 2. Find the management form and decrement the TOTAL_FORMS count.
+                        // 3. Remove the form row.
+                        const formRow = this.closest('.form-row-item');
+                        const totalFormsInput = document.querySelector('#id_{{ prefix }}-TOTAL_FORMS');
+                        if (totalFormsInput) totalFormsInput.value = parseInt(totalFormsInput.value) - 1;
+                        formRow.remove();
+                    "
+                {% endif %}
+             <i class="fas fa-trash-alt"></i>
+         </button>
+        <h5 class="fw-bold">Entry #<span class="entry-index">{% if form.instance.pk %}{{ forloop.counter }}{% else %}__prefix__{% endif %}</span></h5>
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label for="{{ form.company.id_for_label }}" class="form-label mb-1">{{ form.company.label }}</label>
+                {{ form.company }}
+            </div>
+            <div class="col-md-6 mb-3">
+                <label for="{{ form.title.id_for_label }}" class="form-label mb-1">{{ form.title.label }}</label>
+                {{ form.title }}
+            </div>
+            <div class="col-md-6 mb-3">
+                <label for="{{ form.start_year.id_for_label }}" class="form-label mb-1">{{ form.start_year.label }}</label>
+                {{ form.start_year }}
+            </div>
+            <div class="col-md-6">
+                <label for="{{ form.end_year.id_for_label }}" class="form-label mb-1">{{ form.end_year.label }}</label>
+                {{ form.end_year }}
+                <div class="form-check mt-1">
+                    {{ form.is_current }}
+                    <label class="form-check-label" for="{{ form.is_current.id_for_label }}">{{ form.is_current.label }}</label>
+                </div>
+            </div>
+            <div class="col-12 mb-3">
+                <label for="{{ form.description.id_for_label }}" class="form-label mb-1">{{ form.description.label }}</label>
+                {{ form.description }}
+            </div>
+        </div>
+        {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+    </div>
+{% elif prefix == 'links' %}
+    <div>
+        <div class="row">
+            <div class="col-md-6 mb-1">
+                <label for="{{ form.label.id_for_label }}" class="form-label mb-1">{{ form.label.label }}</label>
+            </div>
+            <div class="col-md-6 mb-1">
+                <label for="{{ form.url.id_for_label }}" class="form-label mb-1">{{ form.url.label }}</label>
+            </div>
+        </div>
+        <div class="d-flex align-items-center">
+            <div class="row flex-grow-1 me-2">
+                <div class="col-md-6">{{ form.label }}</div>
+                <div class="col-md-6">{{ form.url }}</div>
+            </div>
+        {% if form.instance.pk %}
+            <button type="button" class="btn btn-sm btn-outline-danger remove-form-row"
+                    hx-delete="{% url 'manage_form_rows' formset_name=prefix %}?object_id={{ form.instance.pk }}"
+                    hx-target="closest .form-row-item"
+                    hx-swap="outerHTML">
+                <i class="fas fa-trash-alt"></i>
+            </button>
+        {% else %}
+            <button type="button" class="btn btn-sm btn-outline-danger remove-form-row"
+                    onclick="
+                        // This is a new, unsaved form. Deletion is a client-side only action.
+                        // 1. Find the form row to remove it from the DOM.
+                        // 2. Find the management form and decrement the TOTAL_FORMS count.
+                        // 3. Remove the form row.
+                        const formRow = this.closest('.form-row-item');
+                        const totalFormsInput = document.querySelector('#id_{{ prefix }}-TOTAL_FORMS');
+                        if (totalFormsInput) totalFormsInput.value = parseInt(totalFormsInput.value) - 1;
+                        formRow.remove();
+                    ">
+                <i class="fas fa-trash-alt"></i>
+            </button>
+        {% endif %}
+        </div>
+    </div>
+    {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+{% endif %}
+</div>

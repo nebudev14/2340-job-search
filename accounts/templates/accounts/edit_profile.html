@@ -1,0 +1,180 @@
+{% extends 'base.html' %} 
+{% block content %}
+<script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.7/dist/htmx.min.js"></script>
+
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-9 mx-auto">
+            <h2 class="fw-bold mb-4">Edit Profile</h2>
+
+            <form method="post">
+                {% csrf_token %}
+
+                <!-- Profile Information Section -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-dark text-white fw-bold">
+                        <i class="fas fa-user-circle me-2"></i>Profile Information
+                    </div>
+                    <div class="card-body">
+                        {% for field in profile_form %}
+                            <div class="mb-3">
+                                <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                                {{ field }}
+                                {% if field.help_text %}
+                                    <div class="form-text">{{ field.help_text }}</div>
+                                {% endif %}
+                                {% for error in field.errors %}
+                                    <div class="text-danger small">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Skills Section -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-dark text-white fw-bold d-flex justify-content-between align-items-center">
+                        <div><i class="fas fa-cogs me-2"></i>Skills</div>
+                        <button type="button" class="btn btn-sm btn-outline-light" 
+                                hx-get="{% url 'manage_form_rows' formset_name='skills' %}" 
+                                hx-target="#skills-forms" 
+                                hx-swap="beforeend">
+                            <i class="fas fa-plus-circle me-1"></i>Add
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        {{ skill_formset.management_form }}
+                        <div id="skills-forms">
+                            {% for form in skill_formset %}
+                                {% include 'partials/form_row.html' with form=form prefix='skills' %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Education Section -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-dark text-white fw-bold d-flex justify-content-between align-items-center">
+                        <div><i class="fas fa-graduation-cap me-2"></i>Education</div>
+                        <button type="button" class="btn btn-sm btn-outline-light"
+                                hx-get="{% url 'manage_form_rows' formset_name='education' %}"
+                                hx-target="#education-forms"
+                                hx-swap="beforeend">
+                            <i class="fas fa-plus-circle me-1"></i>Add
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        {{ education_formset.management_form }}
+                        <div id="education-forms">
+                            {% for form in education_formset %}
+                                {% include 'partials/form_row.html' with form=form prefix='education' %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Experience Section -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-dark text-white fw-bold d-flex justify-content-between align-items-center">
+                        <div><i class="fas fa-briefcase me-2"></i>Experience</div>
+                        <button type="button" class="btn btn-sm btn-outline-light"
+                                hx-get="{% url 'manage_form_rows' formset_name='experience' %}"
+                                hx-target="#experience-forms"
+                                hx-swap="beforeend">
+                            <i class="fas fa-plus-circle me-1"></i>Add
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        {{ experience_formset.management_form }}
+                        <div id="experience-forms">
+                            {% for form in experience_formset %}
+                                {% include 'partials/form_row.html' with form=form prefix='experience' %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Links Section -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-dark text-white fw-bold d-flex justify-content-between align-items-center">
+                        <div><i class="fas fa-link me-2"></i>Links</div>
+                        <button type="button" class="btn btn-sm btn-outline-light"
+                                hx-get="{% url 'manage_form_rows' formset_name='links' %}"
+                                hx-target="#links-forms"
+                                hx-swap="beforeend">
+                            <i class="fas fa-plus-circle me-1"></i>Add
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        {{ link_formset.management_form }}
+                        <div id="links-forms">
+                            {% for form in link_formset %}
+                                {% include 'partials/form_row.html' with form=form prefix='links' %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-grid mt-4">
+                    <button type="submit" class="btn btn-primary btn-lg fw-bold">
+                        Save Profile
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Add the CSRF token to all HTMX requests
+document.body.addEventListener('htmx:configRequest', function(evt) {
+    evt.detail.headers['X-CSRFToken'] = '{{ csrf_token }}';
+});
+
+// Listen for custom events triggered by the server after a formset item is deleted.
+['skills', 'education', 'experience', 'links'].forEach(prefix => {
+    document.body.addEventListener(`formset-item-deleted-${prefix}`, function(evt) {
+        // Find the management form's TOTAL_FORMS input for the specific formset.
+        const totalFormsInput = document.querySelector(`#id_${prefix}-TOTAL_FORMS`);
+        if (totalFormsInput) {
+            // Decrement the count to keep the form state in sync with the UI.
+            const currentCount = parseInt(totalFormsInput.value, 10);
+            if (currentCount > 0) totalFormsInput.value = currentCount - 1;
+        }
+    });
+});
+
+document.body.addEventListener('htmx:afterSwap', function(evt) {
+    // This event fires after a new form row has been added.
+    // We only care about successful GET requests that add a new form row.
+    const request = evt.detail.xhr;
+    if (request.status === 200 && request.response) {
+        // Find the target container where the new form was added.
+        const target = evt.detail.target;
+        if (target) {
+            // Get the prefix from the target's ID (e.g., 'skills-forms' -> 'skills').
+            const prefix = target.id.replace('-forms', '');
+            // Find the management form's TOTAL_FORMS input for this specific formset.
+            const totalFormsInput = document.querySelector(`#id_${prefix}-TOTAL_FORMS`);
+
+            if (totalFormsInput) {
+                // Get the current form count, which will be the index for our new form.
+                const formIndex = parseInt(totalFormsInput.value, 10);
+
+                // Find the newly added form row, which is always the last one and still has the '__prefix__' placeholder.
+                const newFormRow = Array.from(target.children).find(child => child.innerHTML.includes('__prefix__'));
+
+                if (newFormRow) {
+                    // Use a regular expression to globally replace all instances of '__prefix__'.
+                    // This is crucial for updating all attributes ('name', 'id', 'for') correctly.
+                    newFormRow.innerHTML = newFormRow.innerHTML.replace(/__prefix__/g, formIndex);
+                }
+
+                // Finally, increment the TOTAL_FORMS count so the management form is correct for the next submission.
+                totalFormsInput.value = parseInt(totalFormsInput.value, 10) + 1;
+            }
+        }
+    }
+});
+</script>
+{% endblock content %}
