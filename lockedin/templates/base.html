@@ -51,7 +51,7 @@
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
       <div class="container">
-        <a class="navbar-brand fw-bold text-primary" href="#">
+        <a class="navbar-brand fw-bold text-primary" href="{% url 'home.index' %}">
           <i class="fas fa-briefcase me-2"></i>LockedIn
         </a>
         <button
@@ -97,7 +97,7 @@
               </button>
               <ul class="dropdown-menu">
                 <li>
-                  <a class="dropdown-item" href="#"
+                  <a class="dropdown-item" href="{% url 'accounts.profile_view' username=user.username %}"
                     ><i class="fas fa-user-circle me-2"></i>Profile</a
                   >
                 </li>
