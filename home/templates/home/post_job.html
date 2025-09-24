@@ -1,0 +1,190 @@
+{% extends 'base.html' %}
+
+{% block title %}Post a Job - LockedIn{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-plus me-2"></i>Post a New Job
+                    </h4>
+                </div>
+                <div class="card-body p-4">
+                    <p class="text-muted mb-4">
+                        Find the perfect candidate for your open position. Fill out the details below to post your job listing.
+                    </p>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-8 mb-3">
+                                <label for="{{ form.title.id_for_label }}" class="form-label fw-bold">
+                                    {{ form.title.label }}
+                                    <span class="text-danger">*</span>
+                                </label>
+                                {{ form.title }}
+                                {% if form.title.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.title.errors %}
+                                        <small>{{ error }}</small><br>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.company.id_for_label }}" class="form-label fw-bold">
+                                    {{ form.company.label }}
+                                    <span class="text-danger">*</span>
+                                </label>
+                                {{ form.company }}
+                                {% if form.company.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.company.errors %}
+                                        <small>{{ error }}</small><br>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                                <div class="form-text">
+                                    <small>Don't see your company? Contact admin to add it.</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.description.id_for_label }}" class="form-label fw-bold">
+                                {{ form.description.label }}
+                                <span class="text-danger">*</span>
+                            </label>
+                            {{ form.description }}
+                            {% if form.description.errors %}
+                            <div class="text-danger">
+                                {% for error in form.description.errors %}
+                                    <small>{{ error }}</small><br>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.requirements.id_for_label }}" class="form-label fw-bold">
+                                {{ form.requirements.label }}
+                                <span class="text-danger">*</span>
+                            </label>
+                            {{ form.requirements }}
+                            {% if form.requirements.errors %}
+                            <div class="text-danger">
+                                {% for error in form.requirements.errors %}
+                                    <small>{{ error }}</small><br>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.location.id_for_label }}" class="form-label fw-bold">
+                                    {{ form.location.label }}
+                                    <span class="text-danger">*</span>
+                                </label>
+                                {{ form.location }}
+                                {% if form.location.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.location.errors %}
+                                        <small>{{ error }}</small><br>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-3 mb-3">
+                                <label for="{{ form.job_type.id_for_label }}" class="form-label fw-bold">
+                                    {{ form.job_type.label }}
+                                    <span class="text-danger">*</span>
+                                </label>
+                                {{ form.job_type }}
+                                {% if form.job_type.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.job_type.errors %}
+                                        <small>{{ error }}</small><br>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-3 mb-3">
+                                <label for="{{ form.experience_level.id_for_label }}" class="form-label fw-bold">
+                                    {{ form.experience_level.label }}
+                                    <span class="text-danger">*</span>
+                                </label>
+                                {{ form.experience_level }}
+                                {% if form.experience_level.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.experience_level.errors %}
+                                        <small>{{ error }}</small><br>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.salary_min.id_for_label }}" class="form-label fw-bold">
+                                    {{ form.salary_min.label }}
+                                </label>
+                                {{ form.salary_min }}
+                                {% if form.salary_min.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.salary_min.errors %}
+                                        <small>{{ error }}</small><br>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.salary_max.id_for_label }}" class="form-label fw-bold">
+                                    {{ form.salary_max.label }}
+                                </label>
+                                {{ form.salary_max }}
+                                {% if form.salary_max.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.salary_max.errors %}
+                                        <small>{{ error }}</small><br>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>Posting Guidelines:</strong>
+                            <ul class="mb-0 mt-2">
+                                <li>Be clear and specific about the role and requirements</li>
+                                <li>Include salary information to attract the right candidates</li>
+                                <li>Mention any benefits or perks</li>
+                                <li>Use professional language throughout</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="d-flex gap-3">
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-plus me-2"></i>Post Job
+                            </button>
+                            <a href="{% url 'job_list' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Back to Jobs
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}

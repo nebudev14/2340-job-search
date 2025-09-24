@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+
+{% block title %}Apply for {{ job.title }} - LockedIn{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-paper-plane me-2"></i>Apply for {{ job.title }}
+                    </h4>
+                </div>
+                <div class="card-body p-4">
+                    <!-- Job Summary -->
+                    <div class="row align-items-center mb-4 p-3 bg-light rounded">
+                        <div class="col-md-2 text-center">
+                            <div class="bg-primary rounded-circle d-inline-flex align-items-center justify-content-center" 
+                                 style="width: 60px; height: 60px;">
+                                <i class="fas fa-briefcase text-white fa-lg"></i>
+                            </div>
+                        </div>
+                        <div class="col-md-10">
+                            <h5 class="fw-bold mb-1">{{ job.title }}</h5>
+                            <p class="text-muted mb-1">
+                                <i class="fas fa-building me-1"></i>{{ job.company.name }}
+                            </p>
+                            <p class="text-muted mb-0">
+                                <i class="fas fa-map-marker-alt me-1"></i>{{ job.location }}
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <!-- Application Form -->
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <div class="mb-4">
+                            <label for="{{ form.cover_letter.id_for_label }}" class="form-label fw-bold">
+                                {{ form.cover_letter.label }}
+                                <span class="text-danger">*</span>
+                            </label>
+                            {{ form.cover_letter }}
+                            {% if form.cover_letter.help_text %}
+                            <div class="form-text">{{ form.cover_letter.help_text }}</div>
+                            {% endif %}
+                            {% if form.cover_letter.errors %}
+                            <div class="text-danger">
+                                {% for error in form.cover_letter.errors %}
+                                    <small>{{ error }}</small><br>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="{{ form.resume.id_for_label }}" class="form-label fw-bold">
+                                {{ form.resume.label }}
+                                <span class="text-danger">*</span>
+                            </label>
+                            {{ form.resume }}
+                            {% if form.resume.help_text %}
+                            <div class="form-text">{{ form.resume.help_text }}</div>
+                            {% endif %}
+                            {% if form.resume.errors %}
+                            <div class="text-danger">
+                                {% for error in form.resume.errors %}
+                                    <small>{{ error }}</small><br>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                            <div class="form-text">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Please upload your resume in PDF, DOC, or DOCX format.
+                            </div>
+                        </div>
+                        
+                        <div class="alert alert-info">
+                            <i class="fas fa-lightbulb me-2"></i>
+                            <strong>Application Tips:</strong>
+                            <ul class="mb-0 mt-2">
+                                <li>Tailor your cover letter to this specific role</li>
+                                <li>Highlight relevant experience and skills</li>
+                                <li>Keep your resume up-to-date and professional</li>
+                                <li>Proofread everything before submitting</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="d-flex gap-3">
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-paper-plane me-2"></i>Submit Application
+                            </button>
+                            <a href="{% url 'job_detail' job.id %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Back to Job Details
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
