@@ -8,7 +8,24 @@
           <i class="fas fa-user-circle fa-4x text-primary me-4"></i>
           <div>
             <h1 class="fw-bold mb-0">{{ profile.name }}</h1>
-            <p class="text-muted lead mb-0">{{ profile.bio }}</p>
+            <p class="text-muted lead mb-1">{{ profile.bio }}</p>
+
+            {# --- NEW: role badge --- #}
+            {% if profile.role == 'RECRUITER' %}
+              <span class="badge bg-primary">Recruiter</span>
+            {% else %}
+              <span class="badge bg-secondary">Job Seeker</span>
+            {% endif %}
+
+            {# --- NEW: recruiter email, only for recruiters --- #}
+            {% if profile.role == 'RECRUITER' and profile.email %}
+              <p class="mt-2 mb-0">
+                <i class="fas fa-envelope me-2"></i>
+                <a href="mailto:{{ profile.email }}" class="text-decoration-none">
+                  {{ profile.email }}
+                </a>
+              </p>
+            {% endif %}
           </div>
         </div>
         <div class="d-flex justify-content-end">

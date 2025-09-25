@@ -13,6 +13,7 @@ class Profile(models.Model):
     name = models.CharField(max_length=255)
     bio = models.TextField(blank=True)
     role = models.CharField(max_length=20, choices=Role.choices, default=Role.JOB_SEEKER)
+    email = models.EmailField(blank=True)
 
     def __str__(self):
         return f'{self.user.username} - {self.get_role_display()}'
@@ -68,3 +69,4 @@ class Link(models.Model):
 
     def __str__(self):
         return f"{self.label}: {self.url}"
+

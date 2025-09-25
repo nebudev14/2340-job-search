@@ -29,8 +29,16 @@ def signup(request):
             with transaction.atomic():
                 user = form.save()
                 # The profile is created automatically by the post_save signal.
-                # We just need to update the role from the form.
+                # We just need to update fields from the form.
                 user.profile.role = form.cleaned_data.get("role")
+
+                # --- NEW: store recruiter email if role is RECRUITER ---
+                if form.cleaned_data.get("role") == Profile.Role.RECRUITER:
+                    user.profile.email = form.cleaned_data.get("email")
+                else:
+                    # optional: clear any previous value if switching away from recruiter
+                    user.profile.email = ""
+
                 user.profile.save()
 
             auth_login(request, user)  # log the user in

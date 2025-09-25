@@ -13,9 +13,24 @@ class CustomUserCreationForm(UserCreationForm):
         label="I am a...",
     )
 
+    # Recruiter contact email (required only when role == RECRUITER; enforced in clean())
+    email = forms.EmailField(
+        required=False,
+        label="Recruiter Email",
+        widget=forms.EmailInput(attrs={"class": "form-control"})
+    )
+
     class Meta(UserCreationForm.Meta):
         model = User
         fields = ("username", "password1", "password2")
+
+    def clean(self):
+        cleaned = super().clean()
+        role = cleaned.get("role")
+        email = cleaned.get("email")
+        if role == Profile.Role.RECRUITER and not email:
+            self.add_error("email", "Email is required for recruiter accounts.")
+        return cleaned
 
 
 class ProfileForm(forms.ModelForm):
