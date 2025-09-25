@@ -1,13 +1,16 @@
+# home/admin.py
 from django.contrib import admin
 from .models import Company, Job, JobApplication
 
 
 @admin.register(Company)
 class CompanyAdmin(admin.ModelAdmin):
-    list_display = ['name', 'location', 'created_at']
-    list_filter = ['created_at']
-    search_fields = ['name', 'location']
+    list_display = ['name', 'owner', 'location', 'created_at']
+    list_filter = ['created_at', 'owner']
+    search_fields = ['name', 'location', 'owner__username']
     ordering = ['-created_at']
+    fields = ('owner', 'name', 'description', 'website', 'location', 'logo', 'created_at')
+    readonly_fields = ('created_at',)
 
 
 @admin.register(Job)

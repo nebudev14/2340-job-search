@@ -1,9 +1,18 @@
+# home/models.py
 from django.db import models
-from django.contrib.auth.models import User
+from django.conf import settings
 from django.utils import timezone
 
 
 class Company(models.Model):
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        related_name='companies',
+        null=True,
+        blank=True,
+        help_text="User who owns/manages this company (optional)"
+    )
     name = models.CharField(max_length=200)
     description = models.TextField(blank=True)
     website = models.URLField(blank=True)
@@ -44,7 +53,7 @@ class Job(models.Model):
     salary_min = models.IntegerField(null=True, blank=True)
     salary_max = models.IntegerField(null=True, blank=True)
     is_active = models.BooleanField(default=True)
-    posted_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='posted_jobs')
+    posted_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='posted_jobs')
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -74,7 +83,7 @@ class JobApplication(models.Model):
     ]
 
     job = models.ForeignKey(Job, on_delete=models.CASCADE, related_name='applications')
-    applicant = models.ForeignKey(User, on_delete=models.CASCADE, related_name='job_applications')
+    applicant = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='job_applications')
     cover_letter = models.TextField(blank=True)
     resume = models.FileField(upload_to='resumes/', blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')

@@ -10,7 +10,7 @@ from .forms import JobApplicationForm, JobForm
 def index(request):
     # Get featured jobs (latest 3 active jobs)
     featured_jobs = Job.objects.filter(is_active=True)[:3]
-    
+
     template_data = {
         'featured_jobs': featured_jobs,
     }
@@ -19,31 +19,31 @@ def index(request):
 
 def job_list(request):
     jobs = Job.objects.filter(is_active=True)
-    
+
     # Search functionality
     search_query = request.GET.get('search', '')
     if search_query:
         jobs = jobs.filter(
-            Q(title__icontains=search_query) | 
+            Q(title__icontains=search_query) |
             Q(company__name__icontains=search_query) |
             Q(description__icontains=search_query)
         )
-    
+
     # Location filter
     location = request.GET.get('location', '')
     if location:
         jobs = jobs.filter(location__icontains=location)
-    
+
     # Job type filter
     job_type = request.GET.get('job_type', '')
     if job_type:
         jobs = jobs.filter(job_type=job_type)
-    
+
     # Experience level filter
     experience_level = request.GET.get('experience_level', '')
     if experience_level:
         jobs = jobs.filter(experience_level=experience_level)
-    
+
     # Salary range filter
     salary_range = request.GET.get('salary_range', '')
     if salary_range == '30-50':
@@ -54,12 +54,12 @@ def job_list(request):
         jobs = jobs.filter(salary_min__gte=80000, salary_max__lte=120000)
     elif salary_range == '120+':
         jobs = jobs.filter(salary_min__gte=120000)
-    
+
     # Pagination
     paginator = Paginator(jobs, 10)  # Show 10 jobs per page
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
-    
+
     context = {
         'jobs': page_obj,
         'search_query': search_query,
@@ -70,42 +70,42 @@ def job_list(request):
         'job_types': Job.JOB_TYPES,
         'experience_levels': Job.EXPERIENCE_LEVELS,
     }
-    
+
     return render(request, 'home/job_list.html', context)
 
 
 def job_detail(request, job_id):
     job = get_object_or_404(Job, id=job_id, is_active=True)
     user_has_applied = False
-    
+
     if request.user.is_authenticated:
         user_has_applied = JobApplication.objects.filter(
-            job=job, 
+            job=job,
             applicant=request.user
         ).exists()
-    
+
     context = {
         'job': job,
         'user_has_applied': user_has_applied,
     }
-    
+
     return render(request, 'home/job_detail.html', context)
 
 
 @login_required
 def apply_for_job(request, job_id):
     job = get_object_or_404(Job, id=job_id, is_active=True)
-    
+
     # Check if user has already applied
     existing_application = JobApplication.objects.filter(
-        job=job, 
+        job=job,
         applicant=request.user
     ).first()
-    
+
     if existing_application:
         messages.warning(request, 'You have already applied for this job.')
         return redirect('job_detail', job_id=job.id)
-    
+
     if request.method == 'POST':
         form = JobApplicationForm(request.POST, request.FILES)
         if form.is_valid():
@@ -117,19 +117,23 @@ def apply_for_job(request, job_id):
             return redirect('job_detail', job_id=job.id)
     else:
         form = JobApplicationForm()
-    
+
     context = {
         'job': job,
         'form': form,
     }
-    
+
     return render(request, 'home/apply_job.html', context)
 
 
 @login_required
 def post_job(request):
+    """
+    Important: pass `user=request.user` into JobForm so the company select
+    is limited to companies the current user owns (unless staff).
+    """
     if request.method == 'POST':
-        form = JobForm(request.POST)
+        form = JobForm(request.POST, user=request.user)
         if form.is_valid():
             job = form.save(commit=False)
             job.posted_by = request.user
@@ -137,22 +141,28 @@ def post_job(request):
             messages.success(request, 'Job posted successfully!')
             return redirect('job_detail', job_id=job.id)
     else:
-        form = JobForm()
-    
+        form = JobForm(user=request.user)
+
+    # For debugging / template convenience include companies visible to this user
+    if request.user.is_staff:
+        visible_companies = Company.objects.all()
+    else:
+        visible_companies = Company.objects.filter(owner=request.user)
+
     context = {
         'form': form,
+        'visible_companies': visible_companies,
     }
-    
+
     return render(request, 'home/post_job.html', context)
 
 
 @login_required
 def my_applications(request):
     applications = JobApplication.objects.filter(applicant=request.user)
-    
+
     context = {
         'applications': applications,
     }
-    
-    return render(request, 'home/my_applications.html', context)
 
+    return render(request, 'home/my_applications.html', context)
