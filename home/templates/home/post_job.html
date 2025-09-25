@@ -41,25 +41,7 @@
                                     {{ form.company.label }}
                                     <span class="text-danger">*</span>
                                 </label>
-
-                                {# Prefer the form's company field (its queryset is limited in view/form) #}
-                                {% if form.company %}
-                                    {{ form.company }}
-                                {% else %}
-                                    {# Fallback manual select built from companies passed by the view #}
-                                    <select name="company" id="id_company" class="form-select" required>
-                                        <option value="">— Select company —</option>
-                                        {% for c in companies %}
-                                            <option value="{{ c.id }}"
-                                            {% if request.POST.company and request.POST.company|stringformat:"s" == c.id|stringformat:"s" %}
-                                                selected
-                                            {% endif %}>
-                                                {{ c.name }}
-                                            </option>
-                                        {% endfor %}
-                                    </select>
-                                {% endif %}
-
+                                {{ form.company }}
                                 {% if form.company.errors %}
                                 <div class="text-danger">
                                     {% for error in form.company.errors %}
