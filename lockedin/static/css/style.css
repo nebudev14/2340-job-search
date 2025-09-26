@@ -1,14 +1,10 @@
-.bg-index{
+.bg-index {
   background: url("/static/img/background.jpg") no-repeat fixed;
   background-size: 100% auto;
 }
 
-.navbar a.nav-link {
-  color: #FFFEF6 !important;
-}
-
 .bg-dark {
-  background-color: #2E2E2E !important;
+  background-color: #2e2e2e !important;
 }
 
 .ms-footer {
@@ -16,7 +12,7 @@
 }
 
 .ms-footer p {
-  color: #7F7F7F;
+  color: #7f7f7f;
   font-size: 13px;
 }
 
@@ -25,7 +21,7 @@
   text-decoration: none;
 }
 
-.ms-footer-bottom span{
+.ms-footer-bottom span {
   font-size: 13px;
   line-height: 38px;
 }
