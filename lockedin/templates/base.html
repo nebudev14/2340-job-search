@@ -73,10 +73,15 @@
                 <a class="dropdown-item" href="{% url 'accounts.profile_view' username=user.username %}"><i
                     class="fas fa-user-circle me-2"></i>Profile</a>
               </li>
-              <li>
-                <a class="dropdown-item" href="{% url 'my_applications' %}"><i class="fas fa-file-alt me-2"></i>My
-                  Applications</a>
-              </li>
+              {% if user.profile.role == 'RECRUITER' %}
+                <li>
+                  <a class="dropdown-item" href="{% url 'my_jobs' %}"><i class="fas fa-list-alt me-2"></i>Manage Jobs</a>
+                </li>
+              {% else %}
+                <li>
+                  <a class="dropdown-item" href="{% url 'my_applications' %}"><i class="fas fa-file-alt me-2"></i>My Applications</a>
+                </li>
+              {% endif %}
               <li>
                 <hr class="dropdown-divider" />
               </li>
