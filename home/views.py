@@ -253,6 +253,27 @@ def delete_job(request, job_id):
 
 @login_required
 @user_passes_test(is_recruiter, login_url="home.index")
+def toggle_job_status(request, job_id):
+    """
+    Toggles the is_active status of a job posting.
+    """
+    job = get_object_or_404(Job, pk=job_id)
+
+    # Security check: ensure the user owns the job or is staff
+    if job.posted_by != request.user and not request.user.is_staff:
+        return HttpResponseForbidden("You are not allowed to change the status of this job.")
+
+    if request.method == 'POST':
+        job.is_active = not job.is_active
+        job.save()
+
+        status_text = "activated" if job.is_active else "deactivated"
+        messages.success(request, f'The job "{job.title}" has been successfully {status_text}.')
+    
+    return redirect('my_jobs')
+
+@login_required
+@user_passes_test(is_recruiter, login_url="home.index")
 def view_job_applications(request, job_id):
     """
     Allows a recruiter to view all applications for a specific job they posted.

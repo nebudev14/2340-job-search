@@ -8,6 +8,11 @@ urlpatterns = [
     path("jobs/<int:job_id>/", views.job_detail, name="job_detail"),
     path("jobs/<int:job_id>/edit/", views.edit_job, name="edit_job"),
     path("jobs/<int:job_id>/delete/", views.delete_job, name="delete_job"),
+    path(
+        "jobs/<int:job_id>/toggle-status/",
+        views.toggle_job_status,
+        name="toggle_job_status",
+    ),
     path("jobs/<int:job_id>/apply/", views.apply_for_job, name="apply_for_job"),
     path(
         "jobs/<int:job_id>/applications/",

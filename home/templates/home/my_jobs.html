@@ -49,9 +49,19 @@
                             </td>
                             <td>{{ job.created_at|date:"M d, Y" }}</td>
                             <td class="text-end">
-                                <a href="{% url 'view_job_applications' job.id %}" class="btn btn-sm btn-outline-primary" title="View Applications"><i class="fas fa-users"></i></a>
-                                <a href="{% url 'edit_job' job.id %}" class="btn btn-sm btn-outline-secondary" title="Edit Job"><i class="fas fa-edit"></i></a>
-                                <a href="{% url 'delete_job' job.id %}" class="btn btn-sm btn-outline-danger" title="Delete Job"><i class="fas fa-trash"></i></a>
+                                <div class="btn-group">
+                                    <a href="{% url 'view_job_applications' job.id %}" class="btn btn-sm btn-outline-primary" title="View Applications"><i class="fas fa-users"></i></a>
+                                    <a href="{% url 'edit_job' job.id %}" class="btn btn-sm btn-outline-secondary" title="Edit Job"><i class="fas fa-edit"></i></a>
+                                    <form action="{% url 'toggle_job_status' job.id %}" method="POST" class="d-inline">
+                                        {% csrf_token %}
+                                        {% if job.is_active %}
+                                            <button type="submit" class="btn btn-sm btn-outline-warning" title="Deactivate Job"><i class="fas fa-power-off"></i></button>
+                                        {% else %}
+                                            <button type="submit" class="btn btn-sm btn-outline-success" title="Activate Job"><i class="fas fa-power-off"></i></button>
+                                        {% endif %}
+                                    </form>
+                                    <a href="{% url 'delete_job' job.id %}" class="btn btn-sm btn-outline-danger" title="Delete Job"><i class="fas fa-trash"></i></a>
+                                </div>
                             </td>
                         </tr>
                         {% endfor %}
