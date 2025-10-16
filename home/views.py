@@ -3,6 +3,8 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
 from django.http import HttpResponseForbidden
 from django.http import JsonResponse, HttpResponse
+import csv
+from django.utils import timezone
 from django.core.paginator import Paginator
 from django.db.models import Q
 from .models import Job, Company, JobApplication
@@ -378,3 +380,46 @@ def update_application_status(request, application_id):
             return JsonResponse({'error': 'Invalid status'}, status=400)
 
     return redirect('applicant_pipeline', job_id=job.id)
+
+
+@login_required
+@user_passes_test(lambda u: u.is_staff, login_url="home.index")
+def admin_export_data(request):
+    """
+    Allows an administrator to select and export model data as a CSV file from the main site.
+    """
+    MODELS_TO_EXPORT = {
+        'Jobs': Job,
+        'Companies': Company,
+        'Job Applications': JobApplication,
+    }
+
+    if request.method == 'POST':
+        model_key = request.POST.get('model_to_export')
+        ModelClass = MODELS_TO_EXPORT.get(model_key)
+
+        if not ModelClass:
+            messages.error(request, "Invalid data type selected for export.")
+            return redirect('admin_export_data')
+
+        queryset = ModelClass.objects.all()
+        meta = ModelClass._meta
+        field_names = [field.name for field in meta.get_fields() if not field.many_to_many and not field.one_to_many]
+
+        response = HttpResponse(content_type='text/csv')
+        filename = f"{meta.model_name}_export_{timezone.now().strftime('%Y-%m-%d')}.csv"
+        response['Content-Disposition'] = f'attachment; filename={filename}'
+        writer = csv.writer(response)
+
+        writer.writerow(field_names)
+
+        for obj in queryset:
+            row = [getattr(obj, field) for field in field_names]
+            writer.writerow(row)
+        
+        return response
+
+    context = {
+        'export_options': MODELS_TO_EXPORT.keys()
+    }
+    return render(request, 'home/admin_export.html', context)

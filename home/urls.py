@@ -23,4 +23,5 @@ urlpatterns = [
     path("my-applications/", views.my_applications, name="my_applications"),
     path('jobs/<int:job_id>/pipeline/', views.applicant_pipeline, name='applicant_pipeline'),
     path('applications/<int:application_id>/update-status/', views.update_application_status, name='update_application_status'),
+    path('management/export/', views.admin_export_data, name='admin_export_data'),
 ]
