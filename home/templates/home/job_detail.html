@@ -28,7 +28,11 @@
                             <div class="d-flex justify-content-between align-items-start">
                                 <h1 class="fw-bold mb-2">{{ job.title }}</h1>
                                 {% if user == job.posted_by or user.is_staff %}
-                                    <a href="{% url 'edit_job' job.id %}" class="btn btn-outline-secondary btn-sm ms-3 flex-shrink-0"><i class="fas fa-edit me-2"></i>Edit Job</a>
+                                    <div class="btn-group ms-3 flex-shrink-0">
+                                        <a href="{% url 'view_job_applications' job.id %}" class="btn btn-primary btn-sm"><i class="fas fa-users me-2"></i>View Applications</a>
+                                        <a href="{% url 'edit_job' job.id %}" class="btn btn-outline-secondary btn-sm"><i class="fas fa-edit me-2"></i>Edit</a>
+                                        <a href="{% url 'delete_job' job.id %}" class="btn btn-outline-danger btn-sm"><i class="fas fa-trash me-2"></i>Delete</a>
+                                    </div>
                                 {% endif %}
                             </div>
                             <h5 class="text-primary mb-2">
@@ -123,7 +127,7 @@
                                 <i class="fas fa-paper-plane me-2"></i>Apply Now
                             </a>
                             <small class="text-muted d-block text-center">
-                                You'll need to submit a cover letter and resume.
+                                You'll need to submit a tailored note and resume.
                             </small>
                             {% endif %}
                         {% endif %}

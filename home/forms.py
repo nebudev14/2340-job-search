@@ -5,10 +5,10 @@ from .models import Job, Company, JobApplication
 class JobApplicationForm(forms.ModelForm):
     class Meta:
         model = JobApplication
-        fields = ["cover_letter", "resume"]
+        fields = ["note", "resume"]
         widgets = {
-            "cover_letter": forms.Textarea(attrs={"class": "form-control", "rows": 5}),
-            "resume": forms.FileInput(attrs={"class": "form-control"}),
+            "note": forms.Textarea(attrs={"class": "form-control", "rows": 5}),
+            "resume": forms.FileInput(attrs={"class": "form-control"})
         }
 
 

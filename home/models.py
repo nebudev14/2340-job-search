@@ -84,8 +84,12 @@ class JobApplication(models.Model):
 
     job = models.ForeignKey(Job, on_delete=models.CASCADE, related_name='applications')
     applicant = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='job_applications')
-    cover_letter = models.TextField(blank=True)
-    resume = models.FileField(upload_to='resumes/', blank=True)
+    note = models.TextField(
+        blank=True,
+        verbose_name="Tailored Note",
+        help_text="A brief note to the recruiter explaining why you're a great fit for this role."
+    )
+    resume = models.FileField(upload_to='resumes/')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     applied_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)

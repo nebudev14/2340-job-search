@@ -251,6 +251,27 @@ def delete_job(request, job_id):
 
     return render(request, 'home/delete_job_confirmation.html', {'job': job})
 
+@login_required
+@user_passes_test(is_recruiter, login_url="home.index")
+def view_job_applications(request, job_id):
+    """
+    Allows a recruiter to view all applications for a specific job they posted.
+    """
+    job = get_object_or_404(Job, pk=job_id)
+
+    # Security check: ensure the user owns the job or is staff
+    if job.posted_by != request.user and not request.user.is_staff:
+        return HttpResponseForbidden("You are not allowed to view applications for this job.")
+
+    applications = job.applications.all().order_by('-applied_at')
+
+    context = {
+        'job': job,
+        'applications': applications,
+    }
+
+    return render(request, 'home/view_job_applications.html', context)
+
 
 @login_required
 def my_applications(request):

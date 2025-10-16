@@ -37,17 +37,17 @@
                         {% csrf_token %}
                         
                         <div class="mb-4">
-                            <label for="{{ form.cover_letter.id_for_label }}" class="form-label fw-bold">
-                                {{ form.cover_letter.label }}
+                            <label for="{{ form.note.id_for_label }}" class="form-label fw-bold">
+                                {{ form.note.label }}
                                 <span class="text-danger">*</span>
                             </label>
-                            {{ form.cover_letter }}
-                            {% if form.cover_letter.help_text %}
-                            <div class="form-text">{{ form.cover_letter.help_text }}</div>
+                            {{ form.note }}
+                            {% if form.note.help_text %}
+                            <div class="form-text">{{ form.note.help_text }}</div>
                             {% endif %}
-                            {% if form.cover_letter.errors %}
+                            {% if form.note.errors %}
                             <div class="text-danger">
-                                {% for error in form.cover_letter.errors %}
+                                {% for error in form.note.errors %}
                                     <small>{{ error }}</small><br>
                                 {% endfor %}
                             </div>
@@ -80,7 +80,7 @@
                             <i class="fas fa-lightbulb me-2"></i>
                             <strong>Application Tips:</strong>
                             <ul class="mb-0 mt-2">
-                                <li>Tailor your cover letter to this specific role</li>
+                                <li>Tailor your note to this specific role</li>
                                 <li>Highlight relevant experience and skills</li>
                                 <li>Keep your resume up-to-date and professional</li>
                                 <li>Proofread everything before submitting</li>

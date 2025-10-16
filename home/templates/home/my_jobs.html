@@ -1,15 +1,15 @@
 {% extends 'base.html' %}
 
-{% block title %}My Posted Jobs - LockedIn{% endblock %}
+{% block title %}Manage Jobs - LockedIn{% endblock %}
 
 {% block content %}
 <div class="container my-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h2 class="fw-bold">My Posted Jobs</h2>
-            <p class="text-muted mb-0">Manage your job listings and view applicants.</p>
+            <h2 class="fw-bold">Manage Your Job Postings</h2>
+            <p class="text-muted mb-0">View, edit, or delete your job listings and see who has applied.</p>
         </div>
-        <a href="{% url 'post_job' %}" class="btn btn-success">
+        <a href="{% url 'post_job' %}" class="btn btn-primary">
             <i class="fas fa-plus me-2"></i>Post a New Job
         </a>
     </div>
@@ -22,11 +22,8 @@
                     <thead class="table-light">
                         <tr>
                             <th scope="col">Job Title</th>
-                            <th scope="col">Company</th>
-                            {% if user.is_staff %}
-                            <th scope="col">Posted By</th>
-                            {% endif %}
-                            <th scope="col">Status</th>
+                            <th scope="col" class="text-center">Applications</th>
+                            <th scope="col" class="text-center">Status</th>
                             <th scope="col">Posted</th>
                             <th scope="col" class="text-end">Actions</th>
                         </tr>
@@ -34,25 +31,27 @@
                     <tbody>
                         {% for job in jobs %}
                         <tr>
-                            <td class="fw-medium">{{ job.title }}</td>
-                            <td>{{ job.company.name }}</td>
-                            {% if user.is_staff %}
-                            <td>{{ job.posted_by.username }}</td>
-                            {% endif %}
                             <td>
-                                {% if job.is_active %}
-                                <span class="badge bg-success">Active</span>
-                                {% else %}
-                                <span class="badge bg-secondary">Inactive</span>
-                                {% endif %}
+                                <a href="{% url 'job_detail' job.id %}" class="text-decoration-none fw-bold">{{ job.title }}</a>
+                                <div class="text-muted small">{{ job.company.name }}</div>
+                            </td>
+                            <td class="text-center">
+                                {% with app_count=job.applications.count %}
+                                <span class="badge bg-primary rounded-pill fs-6">
+                                    {{ app_count }}
+                                </span>
+                                {% endwith %}
+                            </td>
+                            <td class="text-center">
+                                <span class="badge {% if job.is_active %}bg-success{% else %}bg-secondary{% endif %}">
+                                    {% if job.is_active %}Active{% else %}Inactive{% endif %}
+                                </span>
                             </td>
                             <td>{{ job.created_at|date:"M d, Y" }}</td>
                             <td class="text-end">
-                                <a href="{% url 'job_detail' job.id %}" class="btn btn-sm btn-outline-primary me-1" title="View Job"><i class="fas fa-eye"></i></a>
-                                <a href="{% url 'edit_job' job.id %}" class="btn btn-sm btn-outline-secondary me-1" title="Edit Job"><i class="fas fa-edit"></i></a>
-                                <a href="{% url 'delete_job' job.id %}" class="btn btn-sm btn-outline-danger" title="Delete Job"><i class="fas fa-trash-alt"></i></a>
-                                <!-- Optional: Link to view applicants -->
-                                <!-- <a href="#" class="btn btn-sm btn-outline-info ms-1" title="View Applicants"><i class="fas fa-users"></i></a> -->
+                                <a href="{% url 'view_job_applications' job.id %}" class="btn btn-sm btn-outline-primary" title="View Applications"><i class="fas fa-users"></i></a>
+                                <a href="{% url 'edit_job' job.id %}" class="btn btn-sm btn-outline-secondary" title="Edit Job"><i class="fas fa-edit"></i></a>
+                                <a href="{% url 'delete_job' job.id %}" class="btn btn-sm btn-outline-danger" title="Delete Job"><i class="fas fa-trash"></i></a>
                             </td>
                         </tr>
                         {% endfor %}
@@ -60,11 +59,12 @@
                 </table>
             </div>
             {% else %}
-            <div class="text-center py-5">
-                <h4 class="text-muted">You haven't posted any jobs yet.</h4>
-                <p class="text-muted">Get started by posting your first job opening.</p>
-                <a href="{% url 'post_job' %}" class="btn btn-primary mt-3">Post a Job</a>
-            </div>
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-briefcase fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No Jobs Posted Yet</h5>
+                    <p class="text-muted">You haven't posted any jobs. Get started now to find your next hire.</p>
+                    <a href="{% url 'post_job' %}" class="btn btn-primary">Post Your First Job</a>
+                </div>
             {% endif %}
         </div>
     </div>
