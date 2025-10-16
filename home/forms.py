@@ -2,63 +2,62 @@ from django import forms
 from .models import Job, Company, JobApplication
 
 
+class JobApplicationForm(forms.ModelForm):
+    class Meta:
+        model = JobApplication
+        fields = ["cover_letter", "resume"]
+        widgets = {
+            "cover_letter": forms.Textarea(attrs={"class": "form-control", "rows": 5}),
+            "resume": forms.FileInput(attrs={"class": "form-control"}),
+        }
+
+
 class JobForm(forms.ModelForm):
-    def __init__(self, *args, user=None, **kwargs):
-        """
-        Accept a `user` kwarg and limit company choices:
-         - staff -> all companies
-         - non-staff -> companies owned by the user
-         - unauthenticated -> no companies
-        """
-        super().__init__(*args, **kwargs)
-        if 'company' in self.fields:
-            if user and user.is_authenticated:
-                if getattr(user, 'is_staff', False):
-                    qs = Company.objects.all()
-                else:
-                    qs = Company.objects.filter(owner=user)
-            else:
-                qs = Company.objects.none()
-            self.fields['company'].queryset = qs
-            self.fields['company'].empty_label = "— Select company —"
+    # New field to allow creating a company on the fly
+    new_company_name = forms.CharField(
+        label="Or Create a New Company",
+        required=False,
+        help_text="If your company isn't in the list above, add it here.",
+        widget=forms.TextInput(attrs={"class": "form-control"}),
+    )
 
     class Meta:
         model = Job
         fields = [
-            'title', 'company', 'description', 'requirements',
-            'location', 'job_type', 'experience_level',
-            'salary_min', 'salary_max'
+            "title", "company", "new_company_name", "description", "requirements",
+            "location", "job_type", "experience_level", "salary_min", "salary_max"
         ]
         widgets = {
-            'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. Senior Software Engineer'}),
-            'company': forms.Select(attrs={'class': 'form-select'}),
-            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 5, 'placeholder': "Describe the job..."}),
-            'requirements': forms.Textarea(attrs={'class': 'form-control', 'rows': 4, 'placeholder': "List required skills..."}),
-            'location': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. San Francisco, CA or Remote'}),
-            'job_type': forms.Select(attrs={'class': 'form-select'}),
-            'experience_level': forms.Select(attrs={'class': 'form-select'}),
-            'salary_min': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': '50000'}),
-            'salary_max': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': '80000'}),
-        }
-        labels = {
-            'salary_min': 'Minimum Salary ($)',
-            'salary_max': 'Maximum Salary ($)',
+            "title": forms.TextInput(attrs={"class": "form-control"}),
+            "company": forms.Select(attrs={"class": "form-select"}),
+            "description": forms.Textarea(attrs={"class": "form-control", "rows": 5}),
+            "requirements": forms.Textarea(attrs={"class": "form-control", "rows": 5}),
+            "location": forms.TextInput(attrs={"class": "form-control"}),
+            "job_type": forms.Select(attrs={"class": "form-select"}),
+            "experience_level": forms.Select(attrs={"class": "form-select"}),
+            "salary_min": forms.NumberInput(attrs={"class": "form-control"}),
+            "salary_max": forms.NumberInput(attrs={"class": "form-control"}),
         }
 
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop("user", None)
+        super().__init__(*args, **kwargs)
 
-class JobApplicationForm(forms.ModelForm):
-    class Meta:
-        model = JobApplication
-        fields = ['cover_letter', 'resume']
-        widgets = {
-            'cover_letter': forms.Textarea(attrs={
-                'class': 'form-control',
-                'rows': 6,
-                'placeholder': "Write a compelling cover letter..."
-            }),
-            'resume': forms.FileInput(attrs={'class': 'form-control', 'accept': '.pdf,.doc,.docx'}),
-        }
-        labels = {
-            'cover_letter': 'Cover Letter',
-            'resume': 'Resume (PDF, DOC, DOCX)',
-        }
+        # Limit company choices to those owned by the user, or all for staff
+        if user:
+            if user.is_staff:
+                self.fields["company"].queryset = Company.objects.all()
+            else:
+                self.fields["company"].queryset = Company.objects.filter(owner=user)
+        
+        # Make the company field not required, as we can create a new one
+        self.fields["company"].required = False
+
+    def clean(self):
+        cleaned_data = super().clean()
+        company = cleaned_data.get("company")
+        new_company_name = cleaned_data.get("new_company_name")
+
+        if not company and not new_company_name:
+            raise forms.ValidationError("You must either select an existing company or provide a new company name.")
+        return cleaned_data

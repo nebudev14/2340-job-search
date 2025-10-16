@@ -156,10 +156,22 @@ def post_job(request):
     if request.method == "POST":
         form = JobForm(request.POST, user=request.user) # Pass user to form
         if form.is_valid():
+            new_company_name = form.cleaned_data.get("new_company_name")
+            company = form.cleaned_data.get("company")
+
+            # If a new company name was provided, create it
+            if new_company_name and not company:
+                company, created = Company.objects.get_or_create(
+                    name=new_company_name,
+                    defaults={'owner': request.user} # Assign current user as owner
+                )
+
             job = form.save(commit=False)
+            job.company = company # Assign the selected or newly created company
             job.posted_by = request.user # Set posted_by before saving
             job.save()
             messages.success(request, "Job posted successfully!")
+            # The form's save_m2m() is not needed here as we don't have m2m fields
             return redirect("job_detail", job_id=job.id)
     else:
         form = JobForm(user=request.user)
