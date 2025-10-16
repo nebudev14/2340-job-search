@@ -2,6 +2,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
 from django.http import HttpResponseForbidden
+from django.http import JsonResponse, HttpResponse
 from django.core.paginator import Paginator
 from django.db.models import Q
 from .models import Job, Company, JobApplication
@@ -303,3 +304,77 @@ def my_applications(request):
     }
 
     return render(request, "home/my_applications.html", context)
+
+
+@login_required
+@user_passes_test(is_recruiter, login_url="home.index")
+def applicant_pipeline(request, job_id):
+    """
+    Displays a Kanban-style board for managing job applicants.
+    """
+    job = get_object_or_404(Job, pk=job_id)
+
+    # Security check: ensure the user owns the job or is staff
+    if job.posted_by != request.user and not request.user.is_staff:
+        return HttpResponseForbidden("You are not allowed to view this pipeline.")
+
+    # Get all applications for the job, optimized with select_related
+    applications = job.applications.all().select_related('applicant__profile').order_by('-applied_at')
+
+    # Group applications by status
+    applications_by_status = {stage[0]: [] for stage in JobApplication.ApplicationStatus.choices}
+    for app in applications:
+        # If the status is valid, add it to the correct list.
+        # Otherwise, add it to the 'NEW' list as a fallback for old/invalid statuses.
+        if app.status in applications_by_status:
+            applications_by_status[app.status].append(app)
+        else:
+            applications_by_status[JobApplication.ApplicationStatus.NEW].append(app)
+
+    # Structure data for the template to avoid needing a custom 'get_item' filter
+    pipeline_stages_data = []
+    for stage_key, stage_label in JobApplication.ApplicationStatus.choices:
+        pipeline_stages_data.append({
+            'key': stage_key,
+            'label': stage_label,
+            'applications': applications_by_status.get(stage_key, [])
+        })
+    context = {
+        'job': job,
+        'pipeline_stages': pipeline_stages_data,
+        'status_choices': JobApplication.ApplicationStatus.choices,
+    }
+    return render(request, 'home/applicant_pipeline.html', context)
+
+
+@login_required
+@user_passes_test(is_recruiter, login_url="home.index")
+def update_application_status(request, application_id):
+    """
+    Updates the status of a job application. Handles both standard form posts and AJAX requests.
+    """
+    application = get_object_or_404(JobApplication, pk=application_id)
+    job = application.job
+
+    # Security check: ensure the user owns the job or is staff
+    if job.posted_by != request.user and not request.user.is_staff:
+        return HttpResponseForbidden("You are not allowed to modify this application.")
+
+    if request.method == 'POST':
+        new_status = request.POST.get('status')
+        if new_status in JobApplication.ApplicationStatus.values:
+            application.status = new_status
+            application.save()
+            message_text = f"Status for {application.applicant.username} updated to {application.get_status_display()}."
+
+            # If this is an AJAX request (from drag-and-drop), return the message as JSON.
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({'message': message_text})
+            
+            # For non-AJAX requests, use the standard Django messages framework.
+            messages.success(request, message_text)
+        elif request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            # Handle invalid status for AJAX requests
+            return JsonResponse({'error': 'Invalid status'}, status=400)
+
+    return redirect('applicant_pipeline', job_id=job.id)

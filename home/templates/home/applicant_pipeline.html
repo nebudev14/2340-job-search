@@ -1,0 +1,237 @@
+{% extends 'base.html' %}
+
+{% block title %}Applicant Pipeline: {{ job.title }} - LockedIn{% endblock %}
+
+{% block content %}
+<style>
+    .kanban-board {
+        display: flex;
+        overflow-x: auto;
+        padding-bottom: 1rem;
+        gap: 1rem;
+    }
+    .kanban-column {
+        flex: 0 0 300px; /* Fixed width for columns */
+        min-width: 300px;
+        background-color: #f8f9fa;
+        border-radius: 0.5rem;
+        padding: 0.5rem;
+    }
+    .kanban-column-header {
+        padding: 0.75rem;
+        font-weight: bold;
+        border-bottom: 1px solid #dee2e6;
+        margin-bottom: 1rem;
+    }
+    .kanban-cards {
+        min-height: 200px; /* Ensure columns have a minimum height */
+        max-height: 70vh;
+        overflow-y: auto;
+        padding: 0 0.5rem;
+    }
+    .applicant-card {
+        margin-bottom: 1rem;
+        cursor: grab;
+    }
+    .applicant-card:active {
+        cursor: grabbing;
+    }
+</style>
+
+<div class="container-fluid my-5">
+    <div class="d-flex justify-content-between align-items-center mb-4 px-4">
+        <div>
+            <h2 class="fw-bold">Applicant Pipeline</h2>
+            <p class="text-muted mb-0">Managing applicants for: <a href="{% url 'job_detail' job.id %}">{{ job.title }}</a></p>
+        </div>
+        <a href="{% url 'my_jobs' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Back to My Jobs
+        </a>
+    </div>
+
+    <div class="kanban-board">
+        {% for stage in pipeline_stages %}
+        <div class="kanban-column">
+            <div class="kanban-column-header">
+                {{ stage.label }}
+                <span class="badge bg-secondary rounded-pill float-end" data-count-for="{{ stage.key }}">{{ stage.applications|length }}</span>
+            </div>
+            <div class="kanban-cards" id="stage-{{ stage.key }}" data-status="{{ stage.key }}">
+                {% for application in stage.applications %}
+                <div class="card applicant-card shadow-sm" data-application-id="{{ application.id }}" id="application-{{ application.id }}">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <h5 class="card-title fs-6 fw-bold">
+                                <a href="{% url 'accounts.profile_view' username=application.applicant.username %}" class="text-decoration-none">{{ application.applicant.profile.name|default:application.applicant.username }}</a>
+                            </h5>
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-light py-0 px-2" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fas fa-ellipsis-v"></i>
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="{% url 'accounts.profile_view' username=application.applicant.username %}">View Profile</a></li>
+                                    {% if application.resume or application.note %}
+                                    <li><hr class="dropdown-divider"></li>
+                                    {% endif %}
+                                    {% if application.note %}
+                                    <li>
+                                        <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#noteModal-{{ application.id }}">View Note</a>
+                                    </li>
+                                    {% endif %}
+                                    {% if application.resume %}
+                                    <li><a class="dropdown-item" href="{{ application.resume.url }}" target="_blank">View Resume</a></li>
+                                    {% endif %}
+                                </ul>
+                            </div>
+                        </div>
+                        <p class="card-text small text-muted">Applied: {{ application.applied_at|timesince }} ago</p>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center text-muted p-3 small empty-stage-message">
+                    No applicants in this stage.
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Modals for Applicant Notes -->
+{% for stage in pipeline_stages %}
+    {% for application in stage.applications %}
+        {% if application.note %}
+        <div class="modal fade" id="noteModal-{{ application.id }}" tabindex="-1" aria-labelledby="noteModalLabel-{{ application.id }}" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="noteModalLabel-{{ application.id }}">Note from {{ application.applicant.profile.name|default:application.applicant.username }}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        {{ application.note|linebreaks }}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    {% endfor %}
+{% endfor %}
+
+<!-- Add SortableJS library -->
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+
+<script>
+function showToast(message) {
+    const toastContainer = document.querySelector('.toast-container');
+    if (!toastContainer) return;
+
+    const toastEl = document.createElement('div');
+    toastEl.classList.add('toast', 'align-items-center', 'text-bg-success', 'border-0');
+    toastEl.setAttribute('role', 'alert');
+    toastEl.setAttribute('aria-live', 'assertive');
+    toastEl.setAttribute('aria-atomic', 'true');
+
+    toastEl.innerHTML = `
+        <div class="d-flex">
+            <div class="toast-body">${message}</div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>`;
+    
+    toastContainer.appendChild(toastEl);
+    const toast = new bootstrap.Toast(toastEl);
+    toast.show();
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    const kanbanBoard = document.querySelector('.kanban-board');
+    const kanbanColumns = document.querySelectorAll('.kanban-cards');
+
+    kanbanColumns.forEach(column => {
+        new Sortable(column, {
+            group: 'applicants', // Set a group name for all columns
+            animation: 150,
+            ghostClass: 'bg-info-subtle', // A class for the drop placeholder
+            draggable: '.applicant-card', // Only elements with this class are draggable
+
+            // --- NEW: Ensure drag events are captured even when mouse leaves the container ---
+            forceFallback: true,
+            fallbackOnBody: true,
+
+            // --- NEW: Enable auto-scrolling ---
+            scroll: kanbanBoard, // Explicitly set the scrollable element
+            scrollSensitivity: 50, // Distance from edge to start scrolling (px)
+            scrollSpeed: 10, // Speed of scrolling (px)
+
+            // Called when an item is dropped
+            onEnd: function (evt) {
+                const itemEl = evt.item;  // The dragged element
+                const toColumn = evt.to;    // The column where it was dropped
+                const fromColumn = evt.from; // The column where it came from
+
+                const applicationId = itemEl.dataset.applicationId;
+                const newStatus = toColumn.dataset.status;
+
+                // The URL to send the update to
+                const updateUrl = `/applications/${applicationId}/update-status/`;
+
+                // Get the CSRF token from the page
+                const csrfToken = document.querySelector('input[name=csrfmiddlewaretoken]').value;
+
+                // Prepare the data to send
+                const formData = new FormData();
+                formData.append('status', newStatus);
+
+                // Use the Fetch API to send a POST request to the server
+                fetch(updateUrl, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrfToken,
+                        'X-Requested-With': 'XMLHttpRequest' // To identify this as an AJAX request
+                    },
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.message) {
+                        showToast(data.message);
+
+                        // --- NEW: Update column counts ---
+                        const fromStatus = fromColumn.dataset.status;
+                        const toStatus = toColumn.dataset.status;
+
+                        const fromCountBadge = document.querySelector(`[data-count-for="${fromStatus}"]`);
+                        const toCountBadge = document.querySelector(`[data-count-for="${toStatus}"]`);
+
+                        fromCountBadge.textContent = fromColumn.querySelectorAll('.applicant-card').length;
+                        toCountBadge.textContent = toColumn.querySelectorAll('.applicant-card').length;
+
+                        // --- NEW: Handle empty stage messages ---
+                        // Check the column the card was moved TO
+                        const toColumnEmptyMessage = toColumn.querySelector('.empty-stage-message');
+                        if (toColumn.querySelectorAll('.applicant-card').length > 0 && toColumnEmptyMessage) {
+                            toColumnEmptyMessage.remove();
+                        }
+
+                        // Check the column the card was moved FROM
+                        if (fromColumn.querySelectorAll('.applicant-card').length === 0) {
+                            const emptyMessageDiv = document.createElement('div');
+                            emptyMessageDiv.classList.add('text-center', 'text-muted', 'p-3', 'small', 'empty-stage-message');
+                            emptyMessageDiv.textContent = 'No applicants in this stage.';
+                            fromColumn.appendChild(emptyMessageDiv);
+                        }
+                    } else if (data.error) {
+                        console.error('Error:', data.error);
+                        // You could show an error toast here as well
+                    }
+                })
+                .catch(error => {
+                    console.error('Fetch error:', error);
+                });
+            }
+        });
+    });
+});
+</script>
+{% endblock content %}

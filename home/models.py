@@ -2,6 +2,7 @@
 from django.db import models
 from django.conf import settings
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 
 
 class Company(models.Model):
@@ -73,14 +74,13 @@ class Job(models.Model):
 
 
 class JobApplication(models.Model):
-    STATUS_CHOICES = [
-        ('pending', 'Pending'),
-        ('reviewed', 'Reviewed'),
-        ('interview', 'Interview Scheduled'),
-        ('accepted', 'Accepted'),
-        ('rejected', 'Rejected'),
-        ('withdrawn', 'Withdrawn'),
-    ]
+    class ApplicationStatus(models.TextChoices):
+        NEW = 'NEW', _('New')
+        SCREENING = 'SCREENING', _('Screening')
+        INTERVIEW = 'INTERVIEW', _('Interview')
+        OFFER = 'OFFER', _('Offer')
+        HIRED = 'HIRED', _('Hired')
+        REJECTED = 'REJECTED', _('Rejected')
 
     job = models.ForeignKey(Job, on_delete=models.CASCADE, related_name='applications')
     applicant = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='job_applications')
@@ -89,8 +89,8 @@ class JobApplication(models.Model):
         verbose_name="Tailored Note",
         help_text="A brief note to the recruiter explaining why you're a great fit for this role."
     )
-    resume = models.FileField(upload_to='resumes/')
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    resume = models.FileField(upload_to='resumes/', blank=True, null=True)
+    status = models.CharField(max_length=20, choices=ApplicationStatus.choices, default=ApplicationStatus.NEW)
     applied_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
 
