@@ -55,12 +55,16 @@
           <li class="nav-item">
             <a class="nav-link fw-medium" href="{% url 'home.index' %}"><i class="fas fa-home me-1"></i>Home</a>
           </li>
+          {% if not user.is_authenticated or user.profile.role == 'JOB_SEEKER' %}
           <li class="nav-item">
             <a class="nav-link fw-medium" href="{% url 'job_list' %}"><i class="fas fa-search me-1"></i>Find Jobs</a>
           </li>
+          {% endif %}
+          {% if user.is_authenticated and user.profile.role == 'RECRUITER' %}
           <li class="nav-item">
             <a class="nav-link fw-medium" href="{% url 'post_job' %}"><i class="fas fa-plus me-1"></i>Post Job</a>
           </li>
+          {% endif %}
         </ul>
         <div class="d-flex">
           {% if user.is_authenticated %}
