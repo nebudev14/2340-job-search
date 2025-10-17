@@ -25,7 +25,8 @@ class JobForm(forms.ModelForm):
         model = Job
         fields = [
             "title", "company", "new_company_name", "description", "requirements",
-            "location", "job_type", "experience_level", "salary_min", "salary_max"
+            "location", "latitude", "longitude", "job_type", "experience_level", 
+            "salary_min", "salary_max",
         ]
         widgets = {
             "title": forms.TextInput(attrs={"class": "form-control"}),
@@ -37,6 +38,8 @@ class JobForm(forms.ModelForm):
             "experience_level": forms.Select(attrs={"class": "form-select"}),
             "salary_min": forms.NumberInput(attrs={"class": "form-control"}),
             "salary_max": forms.NumberInput(attrs={"class": "form-control"}),
+            "latitude": forms.HiddenInput(),
+            "longitude": forms.HiddenInput(),
         }
 
     def __init__(self, *args, **kwargs):

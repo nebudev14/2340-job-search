@@ -1,6 +1,19 @@
 {% extends 'base.html' %}
 
-{% block title %}Post a Job - LockedIn{% endblock %}
+{% block title %}Post a New Job - LockedIn{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""/>
+<style>
+    #location-picker-map {
+        height: 300px;
+        border-radius: 0.5rem;
+        margin-top: 0.5rem;
+    }
+</style>
+{% endblock %}
 
 {% block content %}
 <div class="container my-5">
@@ -8,199 +21,43 @@
         <div class="col-lg-8">
             <div class="card border-0 shadow-sm">
                 <div class="card-header bg-primary text-white">
-                    <h4 class="mb-0">
-                        <i class="fas fa-plus me-2"></i>Post a New Job
-                    </h4>
+                    <h4 class="mb-0"><i class="fas fa-plus-circle me-2"></i>Post a New Job</h4>
                 </div>
                 <div class="card-body p-4">
-                    <p class="text-muted mb-4">
-                        Find the perfect candidate for your open position. Fill out the details below to post your job listing.
-                    </p>
-                    
                     <form method="post">
                         {% csrf_token %}
-
-                        {% if form.non_field_errors %}
-                            <div class="alert alert-danger">
-                                {% for error in form.non_field_errors %}
-                                    {{ error }}
-                                {% endfor %}
-                            </div>
-                        {% endif %}
                         
-                        <div class="row">
-                            <div class="col-md-8 mb-3">
-                                <label for="{{ form.title.id_for_label }}" class="form-label fw-bold">
-                                    {{ form.title.label }}
-                                    <span class="text-danger">*</span>
-                                </label>
-                                {{ form.title }}
-                                {% if form.title.errors %}
-                                <div class="text-danger">
-                                    {% for error in form.title.errors %}
-                                        <small>{{ error }}</small><br>
-                                    {% endfor %}
-                                </div>
-                                {% endif %}
-                            </div>
-                            
-                            <div class="col-md-12 mb-3">
-                                <label for="{{ form.company.id_for_label }}" class="form-label fw-bold">
-                                    {{ form.company.label }}
-                                    <span class="text-danger">*</span>
-                                </label>
-                                {{ form.company }}
-                                {% if form.company.errors %}
-                                <div class="text-danger">
-                                    {% for error in form.company.errors %}
-                                        <small>{{ error }}</small><br>
-                                    {% endfor %}
-                                </div>
-                                {% endif %}
-                            </div>
+                        <!-- Render hidden fields first -->
+                        {{ form.latitude }}
+                        {{ form.longitude }}
 
-                            <div class="col-md-12 mb-3">
-                                <label for="{{ form.new_company_name.id_for_label }}" class="form-label fw-bold">
-                                    {{ form.new_company_name.label }}
-                                </label>
-                                {{ form.new_company_name }}
-                                {% if form.new_company_name.help_text %}
-                                <div class="form-text">{{ form.new_company_name.help_text }}</div>
-                                {% endif %}
-                                {% if form.new_company_name.errors %}
-                                <div class="text-danger">
-                                    <small>{{ form.new_company_name.errors.as_text }}</small>
-                                </div>
-                                {% endif %}
-                            </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">{{ form.title.label_tag }} {{ form.title }}</div>
+                            <div class="col-md-6 mb-3">{{ form.company.label_tag }} {{ form.company }}</div>
                         </div>
+                        <div class="mb-3">{{ form.new_company_name.label_tag }} {{ form.new_company_name }}</div>
+                        <div class="mb-3">{{ form.description.label_tag }} {{ form.description }}</div>
+                        <div class="mb-3">{{ form.requirements.label_tag }} {{ form.requirements }}</div>
                         
                         <div class="mb-3">
-                            <label for="{{ form.description.id_for_label }}" class="form-label fw-bold">
-                                {{ form.description.label }}
-                                <span class="text-danger">*</span>
-                            </label>
-                            {{ form.description }}
-                            {% if form.description.errors %}
-                            <div class="text-danger">
-                                {% for error in form.description.errors %}
-                                    <small>{{ error }}</small><br>
-                                {% endfor %}
-                            </div>
-                            {% endif %}
+                            {{ form.location.label_tag }}
+                            {{ form.location }}
+                            <div id="location-picker-map"></div>
+                            <small class="form-text text-muted">
+                                Enter a general location name above, then click the map to set the exact position.
+                            </small>
                         </div>
-                        
-                        <div class="mb-3">
-                            <label for="{{ form.requirements.id_for_label }}" class="form-label fw-bold">
-                                {{ form.requirements.label }}
-                                <span class="text-danger">*</span>
-                            </label>
-                            {{ form.requirements }}
-                            {% if form.requirements.errors %}
-                            <div class="text-danger">
-                                {% for error in form.requirements.errors %}
-                                    <small>{{ error }}</small><br>
-                                {% endfor %}
-                            </div>
-                            {% endif %}
-                        </div>
-                        
+
                         <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="{{ form.location.id_for_label }}" class="form-label fw-bold">
-                                    {{ form.location.label }}
-                                    <span class="text-danger">*</span>
-                                </label>
-                                {{ form.location }}
-                                {% if form.location.errors %}
-                                <div class="text-danger">
-                                    {% for error in form.location.errors %}
-                                        <small>{{ error }}</small><br>
-                                    {% endfor %}
-                                </div>
-                                {% endif %}
-                            </div>
-                            
-                            <div class="col-md-3 mb-3">
-                                <label for="{{ form.job_type.id_for_label }}" class="form-label fw-bold">
-                                    {{ form.job_type.label }}
-                                    <span class="text-danger">*</span>
-                                </label>
-                                {{ form.job_type }}
-                                {% if form.job_type.errors %}
-                                <div class="text-danger">
-                                    {% for error in form.job_type.errors %}
-                                        <small>{{ error }}</small><br>
-                                    {% endfor %}
-                                </div>
-                                {% endif %}
-                            </div>
-                            
-                            <div class="col-md-3 mb-3">
-                                <label for="{{ form.experience_level.id_for_label }}" class="form-label fw-bold">
-                                    {{ form.experience_level.label }}
-                                    <span class="text-danger">*</span>
-                                </label>
-                                {{ form.experience_level }}
-                                {% if form.experience_level.errors %}
-                                <div class="text-danger">
-                                    {% for error in form.experience_level.errors %}
-                                        <small>{{ error }}</small><br>
-                                    {% endfor %}
-                                </div>
-                                {% endif %}
-                            </div>
+                            <div class="col-md-6 mb-3">{{ form.job_type.label_tag }} {{ form.job_type }}</div>
+                            <div class="col-md-6 mb-3">{{ form.experience_level.label_tag }} {{ form.experience_level }}</div>
                         </div>
-                        
                         <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="{{ form.salary_min.id_for_label }}" class="form-label fw-bold">
-                                    {{ form.salary_min.label }}
-                                </label>
-                                {{ form.salary_min }}
-                                {% if form.salary_min.errors %}
-                                <div class="text-danger">
-                                    {% for error in form.salary_min.errors %}
-                                        <small>{{ error }}</small><br>
-                                    {% endfor %}
-                                </div>
-                                {% endif %}
-                            </div>
-                            
-                            <div class="col-md-6 mb-3">
-                                <label for="{{ form.salary_max.id_for_label }}" class="form-label fw-bold">
-                                    {{ form.salary_max.label }}
-                                </label>
-                                {{ form.salary_max }}
-                                {% if form.salary_max.errors %}
-                                <div class="text-danger">
-                                    {% for error in form.salary_max.errors %}
-                                        <small>{{ error }}</small><br>
-                                    {% endfor %}
-                                </div>
-                                {% endif %}
-                            </div>
+                            <div class="col-md-6 mb-3">{{ form.salary_min.label_tag }} {{ form.salary_min }}</div>
+                            <div class="col-md-6 mb-3">{{ form.salary_max.label_tag }} {{ form.salary_max }}</div>
                         </div>
-                        
-                        <div class="alert alert-info">
-                            <i class="fas fa-info-circle me-2"></i>
-                            <strong>Posting Guidelines:</strong>
-                            <ul class="mb-0 mt-2">
-                                <li>Be clear and specific about the role and requirements</li>
-                                <li>Include salary information to attract the right candidates</li>
-                                <li>Mention any benefits or perks</li>
-                                <li>Use professional language throughout</li>
-                            </ul>
-                        </div>
-                        
-                        <div class="d-flex gap-3">
-                            <button type="submit" class="btn btn-success">
-                                <i class="fas fa-plus me-2"></i>Post Job
-                            </button>
-                            <a href="{% url 'job_list' %}" class="btn btn-outline-secondary">
-                                <i class="fas fa-arrow-left me-2"></i>Back to Jobs
-                            </a>
-                        </div>
+
+                        <button type="submit" class="btn btn-primary mt-3">Post Job</button>
                     </form>
                 </div>
             </div>
@@ -208,3 +65,92 @@
     </div>
 </div>
 {% endblock content %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const latField = document.getElementById('id_latitude');
+    const lonField = document.getElementById('id_longitude');
+    const locationField = document.getElementById('id_location');
+
+    let marker; // Marker instance
+    let map;    // Map instance
+
+    function setupMap(center, zoom) {
+        map = L.map('location-picker-map').setView(center, zoom);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        }).addTo(map);
+
+        // If editing, place the initial marker
+        if (latField.value && lonField.value) {
+            marker = L.marker([parseFloat(latField.value), parseFloat(lonField.value)]).addTo(map);
+        }
+
+        map.on('click', function(e) {
+            const { lat, lng } = e.latlng;
+            latField.value = lat.toFixed(6);
+            lonField.value = lng.toFixed(6);
+            
+            if (marker) {
+                marker.setLatLng(e.latlng);
+            } else {
+                marker = L.marker(e.latlng).addTo(map);
+            }
+            
+            // Reverse Geocoding
+            const reverseGeocodeUrl = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`;
+            fetch(reverseGeocodeUrl)
+                .then(response => response.json())
+                .then(data => {
+                    if (data && data.address) {
+                        const address = data.address;
+                        const locationParts = [
+                            address.city || address.town || address.village,
+                            address.state,
+                            address.country
+                        ].filter(Boolean);
+                        locationField.value = locationParts.join(', ');
+                    }
+                })
+                .catch(error => console.error('Error with reverse geocoding:', error));
+        });
+    }
+    
+    // Determine initial center and zoom
+    let initialCenter = [39.8283, -98.5795]; // Default USA
+    let initialZoom = 4;
+
+    // If editing a job, use its coordinates for initial setup
+    if (latField.value && lonField.value) {
+        initialCenter = [parseFloat(latField.value), parseFloat(lonField.value)];
+        initialZoom = 12;
+        setupMap(initialCenter, initialZoom); // Initialize map immediately with job's location
+    } 
+    // For a new job, initialize with default, then try geolocation
+    else {
+        setupMap(initialCenter, initialZoom); // Initialize map immediately with default
+
+        // Then, try to get user's location and re-center the map
+        if (!navigator.geolocation) {
+            console.log("Geolocation not supported for post_job map.");
+            return; // Exit if geolocation is not supported
+        }
+
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                const userLocation = [position.coords.latitude, position.coords.longitude];
+                map.setView(userLocation, 12); // Re-center the existing map
+            },
+            () => {
+                // User denied or error occurred, fall back to default
+                console.log("Geolocation failed or denied for post_job map.");
+            }
+        );
+    } 
+});
+</script>
+{% endblock %}

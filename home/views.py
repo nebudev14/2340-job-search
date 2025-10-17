@@ -5,9 +5,11 @@ from django.http import HttpResponseForbidden
 from django.http import JsonResponse, HttpResponse
 import csv
 from django.utils import timezone
+from math import radians, sin, cos, sqrt, atan2
 from django.core.paginator import Paginator
 from django.db.models import Q
 from .models import Job, Company, JobApplication
+from django.urls import reverse
 from .forms import JobApplicationForm, JobForm
 
 
@@ -109,6 +111,65 @@ def job_detail(request, job_id):
     return render(request, "home/job_detail.html", context)
 
 
+def job_map(request):
+    """
+    Renders the interactive map page for viewing jobs.
+    """
+    return render(request, "home/job_map.html")
+
+
+def haversine(lat1, lon1, lat2, lon2):
+    """
+    Calculate the distance between two points on Earth in miles.
+    """
+    R = 3958.8  # Radius of Earth in miles
+
+    lat1_rad, lon1_rad, lat2_rad, lon2_rad = map(radians, [lat1, lon1, lat2, lon2])
+
+    dlon = lon2_rad - lon1_rad
+    dlat = lat2_rad - lat1_rad
+
+    a = sin(dlat / 2)**2 + cos(lat1_rad) * cos(lat2_rad) * sin(dlon / 2)**2
+    c = 2 * atan2(sqrt(a), sqrt(1 - a))
+
+    distance = R * c
+    return distance
+
+
+def jobs_for_map_api(request):
+    """
+    API endpoint to provide job data for the interactive map.
+    Can be filtered by distance if lat, lon, and distance (in miles) are provided.
+    """
+    lat = request.GET.get('lat')
+    lon = request.GET.get('lon')
+    distance_miles = request.GET.get('distance')
+
+    jobs = Job.objects.filter(is_active=True, latitude__isnull=False, longitude__isnull=False).select_related('company')
+    job_data = []
+
+    for job in jobs:
+        include_job = True
+        # If distance filtering is active, check if the job is within range
+        if lat and lon and distance_miles:
+            try:
+                user_lat, user_lon, max_dist = map(float, [lat, lon, distance_miles])
+                job_dist = haversine(user_lat, user_lon, job.latitude, job.longitude)
+                if job_dist > max_dist:
+                    include_job = False
+            except (ValueError, TypeError):
+                # Ignore invalid filter parameters
+                pass
+        
+        if include_job:
+            job_data.append({
+                'id': job.id, 'title': job.title, 'company': job.company.name, 
+                'lat': job.latitude, 'lon': job.longitude, 'url': reverse('job_detail', args=[job.id]),
+            })
+
+    return JsonResponse(job_data, safe=False)
+
+
 @login_required
 def apply_for_job(request, job_id):
     job = get_object_or_404(Job, id=job_id, is_active=True)
@@ -179,15 +240,8 @@ def post_job(request):
     else:
         form = JobForm(user=request.user)
 
-    # For debugging / template convenience include companies visible to this user
-    if request.user.is_staff:
-        visible_companies = Company.objects.all()
-    else:
-        visible_companies = Company.objects.filter(owner=request.user)
-
     context = {
         "form": form,
-        "visible_companies": visible_companies,
     }
 
     return render(request, "home/post_job.html", context)

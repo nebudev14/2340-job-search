@@ -49,6 +49,8 @@ class Job(models.Model):
     description = models.TextField()
     requirements = models.TextField()
     location = models.CharField(max_length=200)
+    latitude = models.FloatField(null=True, blank=True)
+    longitude = models.FloatField(null=True, blank=True)
     job_type = models.CharField(max_length=20, choices=JOB_TYPES, default='full-time')
     experience_level = models.CharField(max_length=20, choices=EXPERIENCE_LEVELS, default='mid')
     salary_min = models.IntegerField(null=True, blank=True)
