@@ -154,49 +154,43 @@
               <h5 class="mb-0"><i class="fas fa-filter me-2"></i>Filter Jobs</h5>
             </div>
             <div class="card-body">
-              <div class="mb-3">
-                <label class="form-label fw-medium">Job Type</label>
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" id="fulltime">
-                  <label class="form-check-label" for="fulltime">Full-time</label>
+              <form method="GET" action="{% url 'job_list' %}">
+                <div class="mb-3">
+                  <label class="form-label fw-medium">Job Type</label>
+                  <select name="job_type" class="form-select">
+                    <option value="">All Job Types</option>
+                    <option value="full-time">Full-time</option>
+                    <option value="part-time">Part-time</option>
+                    <option value="contract">Contract</option>
+                    <option value="remote">Remote</option>
+                    <option value="internship">Internship</option>
+                  </select>
                 </div>
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" id="parttime">
-                  <label class="form-check-label" for="parttime">Part-time</label>
+                
+                <div class="mb-3">
+                  <label class="form-label fw-medium">Experience Level</label>
+                  <select name="experience_level" class="form-select">
+                    <option value="">All Levels</option>
+                    <option value="entry">Entry Level</option>
+                    <option value="mid">Mid Level</option>
+                    <option value="senior">Senior Level</option>
+                    <option value="executive">Executive</option>
+                  </select>
                 </div>
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" id="contract">
-                  <label class="form-check-label" for="contract">Contract</label>
+                
+                <div class="mb-3">
+                  <label class="form-label fw-medium">Salary Range</label>
+                  <select name="salary_range" class="form-select">
+                    <option value="">Any Salary</option>
+                    <option value="30-50">$30k - $50k</option>
+                    <option value="50-80">$50k - $80k</option>
+                    <option value="80-120">$80k - $120k</option>
+                    <option value="120+">$120k+</option>
+                  </select>
                 </div>
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" id="remote">
-                  <label class="form-check-label" for="remote">Remote</label>
-                </div>
-              </div>
-              
-              <div class="mb-3">
-                <label class="form-label fw-medium">Experience Level</label>
-                <select class="form-select">
-                  <option>All Levels</option>
-                  <option>Entry Level</option>
-                  <option>Mid Level</option>
-                  <option>Senior Level</option>
-                  <option>Executive</option>
-                </select>
-              </div>
-              
-              <div class="mb-3">
-                <label class="form-label fw-medium">Salary Range</label>
-                <select class="form-select">
-                  <option>Any Salary</option>
-                  <option>$30k - $50k</option>
-                  <option>$50k - $80k</option>
-                  <option>$80k - $120k</option>
-                  <option>$120k+</option>
-                </select>
-              </div>
-              
-              <button class="btn btn-primary w-100">Apply Filters</button>
+                
+                <button type="submit" class="btn btn-primary w-100">Apply Filters</button>
+              </form>
             </div>
           </div>
           

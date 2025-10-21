@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+
+{% block title %}Conversation with {{ other_user.username }} - LockedIn{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row">
+    <div class="col-12">
+      <div class="mb-4">
+        <a href="{% url 'messaging.inbox' %}" class="btn btn-outline-secondary mb-3">
+          <i class="fas fa-arrow-left me-2"></i>Back to Inbox
+        </a>
+        <div class="d-flex justify-content-between align-items-center">
+          <div class="d-flex align-items-center">
+            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-3" 
+                 style="width: 60px; height: 60px;">
+              <i class="fas fa-user fa-2x"></i>
+            </div>
+            <div>
+              <h3 class="mb-0">{{ other_user.username }}</h3>
+              {% if other_user.profile %}
+                <span class="badge bg-secondary">{{ other_user.profile.get_role_display }}</span>
+              {% endif %}
+            </div>
+          </div>
+          <a href="{% url 'accounts.profile_view' username=other_user.username %}" class="btn btn-outline-primary">
+            <i class="fas fa-user-circle me-2"></i>View Profile
+          </a>
+        </div>
+      </div>
+
+      <!-- Messages Display -->
+      <div class="card shadow-sm mb-4" style="max-height: 600px; overflow-y: auto;">
+        <div class="card-body">
+          {% if messages %}
+            {% for message in messages %}
+              <div class="mb-4 {% if message.sender == user %}text-end{% endif %}">
+                <div class="d-inline-block" style="max-width: 70%;">
+                  <div class="card {% if message.sender == user %}bg-primary text-white{% else %}bg-light{% endif %}">
+                    <div class="card-body py-2 px-3">
+                      <div class="small mb-1">
+                        <strong>
+                          {% if message.sender == user %}
+                            You
+                          {% else %}
+                            {{ message.sender.username }}
+                          {% endif %}
+                        </strong>
+                      </div>
+                      <p class="mb-1">{{ message.content }}</p>
+                      <div class="small {% if message.sender == user %}text-white-50{% else %}text-muted{% endif %}">
+                        {{ message.timestamp|date:"M d, Y g:i A" }}
+                        {% if message.sender == user and message.is_read %}
+                          <i class="fas fa-check-double ms-1"></i>
+                        {% endif %}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          {% else %}
+            <div class="text-center text-muted py-5">
+              <i class="fas fa-comment-slash fa-3x mb-3"></i>
+              <p>No messages yet. Start the conversation below!</p>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Reply Form -->
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title mb-3"><i class="fas fa-reply me-2"></i>Send a Message</h5>
+          <form method="post">
+            {% csrf_token %}
+            <div class="mb-3">
+              {{ form.content }}
+            </div>
+            <button type="submit" class="btn btn-primary">
+              <i class="fas fa-paper-plane me-2"></i>Send Message
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Auto-scroll to bottom of messages
+  document.addEventListener('DOMContentLoaded', function() {
+    const messagesCard = document.querySelector('.card[style*="max-height"]');
+    if (messagesCard) {
+      messagesCard.scrollTop = messagesCard.scrollHeight;
+    }
+  });
+</script>
+{% endblock %}
+

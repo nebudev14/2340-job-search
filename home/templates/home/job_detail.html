@@ -118,6 +118,21 @@
                 </div>
             </div>
             
+            <!-- Contact Recruiter Card -->
+            {% if user.is_authenticated and user != job.posted_by %}
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-envelope me-2"></i>Contact Recruiter</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-3">Have questions about this position?</p>
+                    <a href="{% url 'messaging.compose_to' username=job.posted_by.username %}" class="btn btn-info w-100">
+                        <i class="fas fa-envelope me-2"></i>Message Recruiter
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+            
             <!-- Job Details Card -->
             <div class="card border-0 shadow-sm">
                 <div class="card-header bg-primary text-white">
