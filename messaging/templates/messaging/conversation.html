@@ -32,8 +32,8 @@
       <!-- Messages Display -->
       <div class="card shadow-sm mb-4" style="max-height: 600px; overflow-y: auto;">
         <div class="card-body">
-          {% if messages %}
-            {% for message in messages %}
+          {% if conversation_messages %}
+            {% for message in conversation_messages %}
               <div class="mb-4 {% if message.sender == user %}text-end{% endif %}">
                 <div class="d-inline-block" style="max-width: 70%;">
                   <div class="card {% if message.sender == user %}bg-primary text-white{% else %}bg-light{% endif %}">

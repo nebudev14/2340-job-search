@@ -62,7 +62,7 @@ def conversation(request, username):
     user = request.user
     
     # Get all messages in this conversation
-    messages = Message.objects.filter(
+    conversation_messages = Message.objects.filter(
         Q(sender=user, receiver=other_user) |
         Q(receiver=user, sender=other_user)
     ).order_by('timestamp')
@@ -83,7 +83,7 @@ def conversation(request, username):
             message.receiver = other_user
             
             # Get subject from the first message in the conversation
-            first_message = messages.first()
+            first_message = conversation_messages.first()
             if first_message:
                 message.subject = f"Re: {first_message.subject}"
             else:
@@ -97,7 +97,7 @@ def conversation(request, username):
     
     context = {
         'other_user': other_user,
-        'messages': messages,
+        'conversation_messages': conversation_messages,
         'form': form
     }
     return render(request, 'messaging/conversation.html', context)
