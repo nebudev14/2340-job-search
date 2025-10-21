@@ -51,7 +51,7 @@ class JobApplicationAdmin(admin.ModelAdmin):
             'fields': ('job', 'applicant', 'status')
         }),
         ('Application Materials', {
-            'fields': ('cover_letter', 'resume')
+            'fields': ('note', 'resume')
         }),
         ('Timestamps', {
             'fields': ('applied_at', 'updated_at'),

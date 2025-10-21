@@ -34,7 +34,7 @@
               <i class="fas fa-envelope me-2"></i>Send Message
             </a>
           {% endif %}
-          {% if user == profile.user %}
+          {% if profile.user == request.user %}
             <a href="{% url 'accounts.edit_profile' %}" class="btn btn-outline-primary fw-medium">
               <i class="fas fa-edit me-2"></i>Edit Profile
             </a>

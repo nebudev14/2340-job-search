@@ -3,7 +3,14 @@
 {% block title %}{{ job.title }} at {{ job.company.name }} - LockedIn{% endblock %}
 
 {% block content %}
-<div class="container my-5">
+<div class="container mt-4 mb-5">
+    <!-- Back to Jobs Link -->
+    <div class="mb-3">
+        <a href="{% url 'job_list' %}" class="text-decoration-none text-primary fw-medium">
+            <i class="fas fa-arrow-left me-2"></i>Back to Job Listings
+        </a>
+    </div>
+
     <div class="row">
         <!-- Job Details -->
         <div class="col-lg-8">
@@ -18,7 +25,16 @@
                             </div>
                         </div>
                         <div class="col-md-10">
-                            <h1 class="fw-bold mb-2">{{ job.title }}</h1>
+                            <div class="d-flex justify-content-between align-items-start">
+                                <h1 class="fw-bold mb-2">{{ job.title }}</h1>
+                                {% if user == job.posted_by or user.is_staff %}
+                                    <div class="btn-group ms-3 flex-shrink-0">
+                                        <a href="{% url 'view_job_applications' job.id %}" class="btn btn-primary btn-sm"><i class="fas fa-users me-2"></i>View Applications</a>
+                                        <a href="{% url 'edit_job' job.id %}" class="btn btn-outline-secondary btn-sm"><i class="fas fa-edit me-2"></i>Edit</a>
+                                        <a href="{% url 'delete_job' job.id %}" class="btn btn-outline-danger btn-sm"><i class="fas fa-trash me-2"></i>Delete</a>
+                                    </div>
+                                {% endif %}
+                            </div>
                             <h5 class="text-primary mb-2">
                                 <i class="fas fa-building me-2"></i>{{ job.company.name }}
                             </h5>
@@ -27,8 +43,11 @@
                                     <p class="text-muted mb-1">
                                         <i class="fas fa-map-marker-alt me-2"></i>{{ job.location }}
                                     </p>
-                                    <p class="text-muted mb-0">
+                                    <p class="text-muted mb-1">
                                         <i class="fas fa-clock me-2"></i>Posted {{ job.created_at|timesince }} ago
+                                    </p>
+                                    <p class="text-muted mb-0">
+                                        <i class="fas fa-user-tie me-2"></i>by <a href="{% url 'accounts.profile_view' username=job.posted_by.username %}" class="text-decoration-none">{{ job.posted_by.profile.name }}</a>
                                     </p>
                                 </div>
                                 <div class="col-md-6">
@@ -88,23 +107,29 @@
                 </div>
                 <div class="card-body">
                     {% if user.is_authenticated %}
-                        {% if user_has_applied %}
-                        <div class="alert alert-info">
-                            <i class="fas fa-check-circle me-2"></i>
-                            You have already applied for this position.
-                        </div>
-                        <a href="{% url 'my_applications' %}" class="btn btn-outline-primary w-100">
-                            <i class="fas fa-list me-2"></i>View My Applications
-                        </a>
+                        {% if user.profile.role == 'RECRUITER' %}
+                            <div class="alert alert-warning">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Recruiter accounts cannot apply for jobs.
+                            </div>
                         {% else %}
-                        <p class="text-muted mb-3">Ready to take the next step in your career?</p>
-                        <a href="{% url 'apply_for_job' job.id %}" class="btn btn-success w-100 mb-3">
-                            <i class="fas fa-paper-plane me-2"></i>Apply Now
-                        </a>
-                        <small class="text-muted">
-                            <i class="fas fa-info-circle me-1"></i>
-                            You'll need to submit a cover letter and resume.
-                        </small>
+                            {% if user_has_applied %}
+                            <div class="alert alert-info">
+                                <i class="fas fa-check-circle me-2"></i>
+                                You have already applied for this position.
+                            </div>
+                            <a href="{% url 'my_applications' %}" class="btn btn-outline-primary w-100">
+                                <i class="fas fa-list me-2"></i>View My Applications
+                            </a>
+                            {% else %}
+                            <p class="text-muted mb-3">Ready to take the next step in your career?</p>
+                            <a href="{% url 'apply_for_job' job.id %}" class="btn btn-success w-100 mb-3">
+                                <i class="fas fa-paper-plane me-2"></i>Apply Now
+                            </a>
+                            <small class="text-muted d-block text-center">
+                                You'll need to submit a tailored note and resume.
+                            </small>
+                            {% endif %}
                         {% endif %}
                     {% else %}
                     <p class="text-muted mb-3">You need to be logged in to apply for jobs.</p>
@@ -185,15 +210,6 @@
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
-    
-    <!-- Back to Jobs -->
-    <div class="row mt-4">
-        <div class="col-12">
-            <a href="{% url 'job_list' %}" class="btn btn-outline-primary">
-                <i class="fas fa-arrow-left me-2"></i>Back to Job Listings
-            </a>
         </div>
     </div>
 </div>

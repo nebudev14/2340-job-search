@@ -83,16 +83,13 @@
                             <div class="card bg-light border-0">
                                 <div class="card-body">
                                     <div class="row">
-                                        <div class="col-md-8">
-                                            <h6 class="fw-bold">Cover Letter:</h6>
+                                        <div class="col-md-8 mb-3 mb-md-0">
+                                            <h6 class="fw-bold">Your Note:</h6>
                                             <p class="text-muted mb-0">
-                                                {% if application.cover_letter %}
-                                                    {{ application.cover_letter|truncatewords:50 }}
-                                                    {% if application.cover_letter|wordcount > 50 %}
-                                                        <small class="text-primary">... (click to view full)</small>
-                                                    {% endif %}
+                                                {% if application.note %}
+                                                    {{ application.note|truncatewords:50 }}
                                                 {% else %}
-                                                    No cover letter provided
+                                                    No note provided
                                                 {% endif %}
                                             </p>
                                         </div>

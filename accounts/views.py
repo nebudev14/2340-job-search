@@ -22,10 +22,7 @@ from accounts.models import Profile, Skill, Education, Experience, Link
 def signup(request):
     if request.method == "POST":
         form = CustomUserCreationForm(request.POST)
-        print("Form submitted")
-        print(form)
         if form.is_valid():
-            print("Form is valid")
             with transaction.atomic():
                 user = form.save()
                 # The profile is created automatically by the post_save signal.

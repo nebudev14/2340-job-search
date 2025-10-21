@@ -1,0 +1,241 @@
+{% extends 'base.html' %}
+
+{% block title %}Job Map - LockedIn{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""/>
+<!-- Marker Cluster CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
+<style>
+    #map { 
+        height: 75vh; 
+        border-radius: 0.5rem;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+    #job-list-sidebar {
+        height: 75vh;
+        overflow-y: auto;
+    }
+    .job-list-item {
+        cursor: pointer;
+        border-left: 3px solid transparent;
+        transition: background-color 0.2s ease-in-out, border-left-color 0.2s ease-in-out;
+    }
+    .job-list-item:hover, .job-list-item.active {
+        background-color: #f8f9fa;
+        border-left-color: var(--bs-primary);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold">Interactive Job Map</h2>
+            <p class="text-muted mb-0">Explore job opportunities based on their location.</p>
+        </div>
+        <a href="{% url 'job_list' %}" class="btn btn-outline-primary">
+            <i class="fas fa-list me-2"></i>View as List
+        </a>
+    </div>
+
+    <div class="row">
+        <!-- Left Sidebar for Filters and Job List -->
+        <div class="col-md-4">
+            <div class="mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <label for="distance-filter" class="form-label fw-medium mb-0">Filter by distance</label>
+                    <button id="center-map-btn" class="btn btn-sm btn-outline-secondary" disabled title="Center map on your location">
+                        <i class="fas fa-crosshairs"></i>
+                    </button>
+                </div>
+                <select id="distance-filter" class="form-select" disabled>
+                    <option value="">Any Distance</option>
+                    <option value="5">Within 5 miles</option>
+                    <option value="10">Within 10 miles</option>
+                    <option value="25">Within 25 miles</option>
+                    <option value="50">Within 50 miles</option>
+                    <option value="100">Within 100 miles</option>
+                </select>
+                <small class="form-text text-muted" id="distance-helper-text">Allow location access to enable distance filtering.</small>
+            </div>
+
+            <h5 class="fw-bold">Jobs on Map (<span id="job-count">0</span>)</h5>
+            <div id="job-list-sidebar" class="list-group list-group-flush border rounded">
+                <div id="job-list-placeholder" class="text-center text-muted p-5">
+                    <p>Jobs shown on the map will appear here.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column for the Map -->
+        <div class="col-md-8">
+            <div id="map"></div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block extra_js %}
+<!-- Make sure you have leaflet.js script loaded -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""></script>
+<!-- Marker Cluster JS -->
+<script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const map = L.map('map');
+    let userLocation = null; // To store user's lat/lon
+    const distanceFilter = document.getElementById('distance-filter');
+    const jobListSidebar = document.getElementById('job-list-sidebar');
+    const centerMapBtn = document.getElementById('center-map-btn');
+    const jobCountSpan = document.getElementById('job-count');
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+
+    const markers = L.markerClusterGroup();
+    let jobMarkers = {}; // To store marker instances, keyed by job.id
+
+    function populateJobList(jobs) {
+        jobListSidebar.innerHTML = ''; // Clear previous list
+        jobCountSpan.textContent = jobs.length;
+
+        if (jobs.length === 0) {
+            jobListSidebar.innerHTML = `
+                <div id="job-list-placeholder" class="text-center text-muted p-5">
+                    <p>No jobs found for the selected filter.</p>
+                </div>`;
+            return;
+        }
+
+        jobs.forEach(job => {
+            const listItem = document.createElement('div');
+            listItem.className = 'list-group-item list-group-item-action job-list-item';
+            listItem.dataset.jobId = job.id;
+            listItem.innerHTML = `
+                <div class="d-flex w-100 justify-content-between">
+                    <h6 class="mb-1 fw-bold">${job.title}</h6>
+                </div>
+                <p class="mb-1 text-muted">${job.company}</p>
+            `;
+            
+            listItem.addEventListener('click', () => {
+                // Pan to marker and open popup
+                const marker = jobMarkers[job.id];
+                if (marker) {
+                    map.setView(marker.getLatLng(), 14);
+                    marker.openPopup();
+                }
+            });
+
+            jobListSidebar.appendChild(listItem);
+        });
+    }
+
+    function loadJobMarkers() {
+        // Clear existing markers before loading new ones
+        markers.clearLayers();
+        jobMarkers = {};
+
+        let apiUrl = "{% url 'jobs_for_map_api' %}";
+        const distance = distanceFilter.value;
+
+        // If a distance is selected and we have the user's location, add query params
+        if (distance && userLocation) {
+            const params = new URLSearchParams({
+                lat: userLocation.latitude,
+                lon: userLocation.longitude,
+                distance: distance
+            });
+            apiUrl += `?${params.toString()}`;
+        }
+
+        fetch(apiUrl)
+        .then(response => response.json())
+        .then(jobs => {
+            populateJobList(jobs); // Populate the sidebar list
+
+            if (jobs.length === 0) {
+                console.log("No jobs with coordinates to display on the map.");
+                return;
+            }
+
+            jobs.forEach(job => {
+                if (job.lat && job.lon) {
+                    const marker = L.marker([job.lat, job.lon]);
+                    const popupContent = `
+                        <h6 class="fw-bold mb-1">${job.title}</h6>
+                        <p class="mb-1 text-muted">${job.company}</p>
+                        <a href="${job.url}" class="btn btn-sm btn-primary text-white">View Job</a>
+                    `;
+                    marker.bindPopup(popupContent);
+                    markers.addLayer(marker);
+                    jobMarkers[job.id] = marker; // Store marker by job ID
+                }
+            });
+
+            map.addLayer(markers);
+            
+            // If we DON'T have the user's location, fit the map to show all markers.
+            // Otherwise, the view is already centered on the user and should stay that way.
+            if (!userLocation && markers.getLayers().length > 0) {
+                map.fitBounds(markers.getBounds());
+            // If a filter results in no markers, re-center on the user.
+            } else if (markers.getLayers().length === 0 && userLocation) {
+                map.setView([userLocation.latitude, userLocation.longitude], 9);
+            }
+        })
+        .catch(error => console.error('Error fetching job data for map:', error));
+    }
+
+    // Add event listener to the distance filter
+    distanceFilter.addEventListener('change', loadJobMarkers);
+
+    // Add event listener for the center map button
+    centerMapBtn.addEventListener('click', () => {
+        if (userLocation) {
+            // Use a slightly higher zoom level for a more focused view
+            map.setView([userLocation.latitude, userLocation.longitude], 12);
+        }
+    });
+
+    // Set a default view immediately
+    map.setView([39.8283, -98.5795], 4); // Default USA
+
+    // Try to get user's location.
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                // Geolocation successful
+                userLocation = position.coords;
+                map.setView([userLocation.latitude, userLocation.longitude], 9);
+                
+                // Enable the distance filter and update helper text
+                distanceFilter.disabled = false;
+                centerMapBtn.disabled = false;
+                document.getElementById('distance-helper-text').textContent = "Filter jobs based on your current location.";
+
+                loadJobMarkers(); // Load markers now that we have location
+            },
+            () => {
+                // Geolocation failed or was denied. Load all jobs.
+                console.log("Geolocation failed or denied for job_map. Using default view.");
+                loadJobMarkers();
+            }
+        );
+    }
+    else { // Geolocation not supported
+        loadJobMarkers();
+    }
+});
+</script>
+{% endblock %}
