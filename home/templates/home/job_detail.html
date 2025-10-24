@@ -1,0 +1,201 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ job.title }} at {{ job.company.name }} - LockedIn{% endblock %}
+
+{% block content %}
+<div class="container mt-4 mb-5">
+    <!-- Back to Jobs Link -->
+    <div class="mb-3">
+        <a href="{% url 'job_list' %}" class="text-decoration-none text-primary fw-medium">
+            <i class="fas fa-arrow-left me-2"></i>Back to Job Listings
+        </a>
+    </div>
+
+    <div class="row">
+        <!-- Job Details -->
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <!-- Job Header -->
+                    <div class="row align-items-center mb-4">
+                        <div class="col-md-2 text-center">
+                            <div class="bg-primary rounded-circle d-inline-flex align-items-center justify-content-center" 
+                                 style="width: 80px; height: 80px;">
+                                <i class="fas fa-briefcase text-white fa-2x"></i>
+                            </div>
+                        </div>
+                        <div class="col-md-10">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <h1 class="fw-bold mb-2">{{ job.title }}</h1>
+                                {% if user == job.posted_by or user.is_staff %}
+                                    <div class="btn-group ms-3 flex-shrink-0">
+                                        <a href="{% url 'view_job_applications' job.id %}" class="btn btn-primary btn-sm"><i class="fas fa-users me-2"></i>View Applications</a>
+                                        <a href="{% url 'edit_job' job.id %}" class="btn btn-outline-secondary btn-sm"><i class="fas fa-edit me-2"></i>Edit</a>
+                                        <a href="{% url 'delete_job' job.id %}" class="btn btn-outline-danger btn-sm"><i class="fas fa-trash me-2"></i>Delete</a>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <h5 class="text-primary mb-2">
+                                <i class="fas fa-building me-2"></i>{{ job.company.name }}
+                            </h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p class="text-muted mb-1">
+                                        <i class="fas fa-map-marker-alt me-2"></i>{{ job.location }}
+                                    </p>
+                                    <p class="text-muted mb-1">
+                                        <i class="fas fa-clock me-2"></i>Posted {{ job.created_at|timesince }} ago
+                                    </p>
+                                    <p class="text-muted mb-0">
+                                        <i class="fas fa-user-tie me-2"></i>by <a href="{% url 'accounts.profile_view' username=job.posted_by.username %}" class="text-decoration-none">{{ job.posted_by.profile.name }}</a>
+                                    </p>
+                                </div>
+                                <div class="col-md-6">
+                                    <span class="badge bg-success me-2">{{ job.get_job_type_display }}</span>
+                                    <span class="badge bg-info">{{ job.get_experience_level_display }}</span>
+                                    <p class="text-muted mt-1 mb-0">
+                                        <i class="fas fa-dollar-sign me-2"></i>{{ job.salary_range }}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Job Description -->
+                    <div class="mb-4">
+                        <h4 class="fw-bold mb-3">Job Description</h4>
+                        <div class="text-muted">
+                            {{ job.description|linebreaks }}
+                        </div>
+                    </div>
+                    
+                    <!-- Requirements -->
+                    <div class="mb-4">
+                        <h4 class="fw-bold mb-3">Requirements</h4>
+                        <div class="text-muted">
+                            {{ job.requirements|linebreaks }}
+                        </div>
+                    </div>
+                    
+                    <!-- Company Info -->
+                    <div class="mb-4">
+                        <h4 class="fw-bold mb-3">About {{ job.company.name }}</h4>
+                        <div class="text-muted">
+                            {% if job.company.description %}
+                                {{ job.company.description|linebreaks }}
+                            {% else %}
+                                <p>Company information not available.</p>
+                            {% endif %}
+                        </div>
+                        {% if job.company.website %}
+                        <p class="mt-3">
+                            <a href="{{ job.company.website }}" target="_blank" class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-external-link-alt me-2"></i>Visit Company Website
+                            </a>
+                        </p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Application Sidebar -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-paper-plane me-2"></i>Apply for this Job</h5>
+                </div>
+                <div class="card-body">
+                    {% if user.is_authenticated %}
+                        {% if user.profile.role == 'RECRUITER' %}
+                            <div class="alert alert-warning">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Recruiter accounts cannot apply for jobs.
+                            </div>
+                        {% else %}
+                            {% if user_has_applied %}
+                            <div class="alert alert-info">
+                                <i class="fas fa-check-circle me-2"></i>
+                                You have already applied for this position.
+                            </div>
+                            <a href="{% url 'my_applications' %}" class="btn btn-outline-primary w-100">
+                                <i class="fas fa-list me-2"></i>View My Applications
+                            </a>
+                            {% else %}
+                            <p class="text-muted mb-3">Ready to take the next step in your career?</p>
+                            <a href="{% url 'apply_for_job' job.id %}" class="btn btn-success w-100 mb-3">
+                                <i class="fas fa-paper-plane me-2"></i>Apply Now
+                            </a>
+                            <small class="text-muted d-block text-center">
+                                You'll need to submit a tailored note and resume.
+                            </small>
+                            {% endif %}
+                        {% endif %}
+                    {% else %}
+                    <p class="text-muted mb-3">You need to be logged in to apply for jobs.</p>
+                    <a href="/admin/login/" class="btn btn-primary w-100 mb-2">
+                        <i class="fas fa-sign-in-alt me-2"></i>Login to Apply
+                    </a>
+                    <a href="/admin/" class="btn btn-outline-secondary w-100">
+                        <i class="fas fa-user-plus me-2"></i>Create Account
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Job Details Card -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Job Details</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <strong>Job Type:</strong>
+                        </div>
+                        <div class="col-6 text-end">
+                            <span class="badge bg-success">{{ job.get_job_type_display }}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <strong>Experience:</strong>
+                        </div>
+                        <div class="col-6 text-end">
+                            <span class="badge bg-info">{{ job.get_experience_level_display }}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <strong>Salary:</strong>
+                        </div>
+                        <div class="col-6 text-end">
+                            <small class="text-muted">{{ job.salary_range }}</small>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <strong>Location:</strong>
+                        </div>
+                        <div class="col-6 text-end">
+                            <small class="text-muted">{{ job.location }}</small>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-6">
+                            <strong>Posted:</strong>
+                        </div>
+                        <div class="col-6 text-end">
+                            <small class="text-muted">{{ job.created_at|timesince }} ago</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}

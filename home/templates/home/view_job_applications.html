@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+
+{% block title %}Applications for {{ job.title }} - LockedIn{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <!-- Back to Jobs Link -->
+    <div class="mb-4">
+        <a href="{% url 'my_jobs' %}" class="text-decoration-none text-primary fw-medium">
+            <i class="fas fa-arrow-left me-2"></i>Back to My Jobs
+        </a>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold">Job Applications</h2>
+            <p class="text-muted mb-0">
+                Showing {{ applications.count }} application{{ applications.count|pluralize }} for <strong class="text-dark">{{ job.title }}</strong>
+            </p>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th scope="col">Applicant</th>
+                            <th scope="col">Applied</th>
+                            <th scope="col">Status</th>
+                            <th scope="col">Resume</th>
+                            <th scope="col">Note</th>
+                            <th scope="col">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for app in applications %}
+                        <tr>
+                            <td>
+                                <a href="{% url 'accounts.profile_view' username=app.applicant.username %}" class="text-decoration-none fw-bold">{{ app.applicant.profile.name }}</a>
+                            </td>
+                            <td>{{ app.applied_at|date:"M d, Y" }}</td>
+                            <td>
+                                <span class="badge bg-secondary">{{ app.get_status_display }}</span>
+                            </td>
+                            <td>
+                                {% if app.resume %}
+                                    <a href="{{ app.resume.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-download me-1"></i> View
+                                    </a>
+                                {% else %}
+                                    <span class="text-muted">N/A</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if app.note %}
+                                    <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#noteModal-{{ app.id }}">
+                                        <i class="fas fa-file-alt me-1"></i> View
+                                    </button>
+                                {% else %}
+                                    <span class="text-muted">N/A</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <!-- Placeholder for future actions like changing status -->
+                                <a href="{% url 'accounts.profile_view' username=app.applicant.username %}" class="btn btn-sm btn-info text-white" title="View Profile"><i class="fas fa-user"></i></a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center text-muted py-4">No applications received for this job yet.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cover Letter Modals -->
+    {% for app in applications %}
+        {% if app.note %}
+        <div class="modal fade" id="noteModal-{{ app.id }}" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Note from {{ app.applicant.profile.name }}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        {{ app.note|linebreaks }}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    {% endfor %}
+</div>
+{% endblock content %}

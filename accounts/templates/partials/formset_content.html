@@ -1,0 +1,8 @@
+<div id="{{ prefix }}-formset-container">
+    {{ formset.management_form }}
+    <div id="{{ prefix }}-forms">
+        {% for form in formset %}
+            {% include 'partials/form_row.html' with form=form prefix=prefix %}
+        {% endfor %}
+    </div>
+</div>

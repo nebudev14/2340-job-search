@@ -1,0 +1,160 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container d-flex justify-content-center align-items-center vh-100">
+  <div class="card shadow-lg p-4" style="max-width: 450px; width: 100%">
+    <div class="card-body">
+      <h2 class="card-title text-center text-primary mb-4 fw-bold">
+        <i class="fas fa-user-plus me-2"></i>Create Your LockedIn Account
+      </h2>
+      <hr />
+
+      <form method="post" novalidate>
+        {% csrf_token %}
+
+        {% if form.errors %}
+        <div class="alert alert-danger" role="alert">
+          <p class="fw-bold mb-1">Please correct the errors below:</p>
+          <ul class="mb-0">
+            {% for field, errors in form.errors.items %}
+              <li>{{ errors|striptags }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+        {% endif %}
+
+        <!-- Username -->
+        <div class="mb-3">
+          <label for="{{ form.username.id_for_label }}" class="form-label">Username</label>
+          <input
+            type="text"
+            name="{{ form.username.name }}"
+            id="{{ form.username.id_for_label }}"
+            class="form-control"
+            value="{{ form.username.value|default:'' }}"
+            {% if form.username.field.required %}required{% endif %}
+          />
+        </div>
+
+        <!-- Passwords -->
+        <div class="mb-3">
+          <label for="{{ form.password1.id_for_label }}" class="form-label">Password</label>
+          <input
+            type="password"
+            name="{{ form.password1.name }}"
+            id="{{ form.password1.id_for_label }}"
+            class="form-control"
+            {% if form.password1.field.required %}required{% endif %}
+          />
+        </div>
+
+        <div class="mb-3">
+          <label for="{{ form.password2.id_for_label }}" class="form-label">Confirm Password</label>
+          <input
+            type="password"
+            name="{{ form.password2.name }}"
+            id="{{ form.password2.id_for_label }}"
+            class="form-control"
+            {% if form.password2.field.required %}required{% endif %}
+          />
+        </div>
+
+        <!-- Keep the hidden role input so the value posts -->
+        {{ form.role }}
+
+        <!-- Role Selection Button Group -->
+        <div class="mb-3">
+          <label class="form-label">{{ form.role.label }}</label>
+          <div class="row g-2" id="role-selector">
+            <div class="col">
+              <button
+                type="button"
+                class="btn btn-outline-primary w-100 p-3"
+                data-role="{{ form.fields.role.choices.0.0 }}"
+              >
+                <i class="fas fa-user-tie d-block fs-3 mb-2"></i>
+                <span class="fw-bold">{{ form.fields.role.choices.0.1 }}</span>
+              </button>
+            </div>
+            <div class="col">
+              <button
+                type="button"
+                class="btn btn-outline-primary w-100 p-3"
+                data-role="{{ form.fields.role.choices.1.0 }}"
+              >
+                <i class="fas fa-building d-block fs-3 mb-2"></i>
+                <span class="fw-bold">{{ form.fields.role.choices.1.1 }}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+        <!-- End Role Selection -->
+
+        <!-- Recruiter Email (styled same as other inputs) -->
+        <div class="mb-3" id="recruiter-email-block" style="display:none;">
+          <label for="{{ form.email.id_for_label }}" class="form-label">Recruiter Email</label>
+          <input
+            type="email"
+            name="{{ form.email.name }}"
+            id="{{ form.email.id_for_label }}"
+            class="form-control"
+            value="{{ form.email.value|default:'' }}"
+            {% if form.email.field.required %}required{% endif %}
+          />
+          {% if form.email.errors %}
+            <div class="invalid-feedback d-block">
+              {{ form.email.errors|striptags }}
+            </div>
+          {% endif %}
+        </div>
+
+        <!-- Submit -->
+        <div class="d-grid mt-4">
+          <button type="submit" class="btn btn-primary btn-lg fw-bold">Sign Up</button>
+        </div>
+      </form>
+
+      <div class="text-center mt-3">
+        <p class="mb-0">
+          Already on LockedIn?
+          <a href="{% url 'accounts.login' %}" class="text-primary fw-medium">Login</a>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const roleSelector = document.getElementById('role-selector');
+  const roleInput = document.getElementById('{{ form.role.id_for_label }}'); // hidden input
+  const buttons = roleSelector.querySelectorAll('button');
+  const emailBlock = document.getElementById('recruiter-email-block');
+
+  function updateUIForRole(selectedRole) {
+    // toggle button styles
+    buttons.forEach(button => {
+      const isActive = button.dataset.role === selectedRole;
+      button.classList.toggle('active', isActive);
+      button.classList.toggle('btn-primary', isActive);
+      button.classList.toggle('btn-outline-primary', !isActive);
+    });
+    // set hidden input
+    if (roleInput) roleInput.value = selectedRole;
+    // show/hide email field
+    if (emailBlock) emailBlock.style.display = (selectedRole === 'RECRUITER') ? '' : 'none';
+  }
+
+  // Initialize from current hidden value (works on re-render after validation errors)
+  const initialRole = roleInput ? roleInput.value : 'JOB_SEEKER';
+  updateUIForRole(initialRole);
+
+  // Click handling for the two role buttons
+  roleSelector.addEventListener('click', function (e) {
+    const button = e.target.closest('button');
+    if (button && button.dataset.role) {
+      updateUIForRole(button.dataset.role);
+    }
+  });
+});
+</script>
+{% endblock content %}

@@ -1,0 +1,121 @@
+{% extends 'base.html' %} 
+{% block content %}
+<div class="container py-5">
+  <div class="row">
+    <div class="col-lg-9 mx-auto mb-4">
+      <div class="card shadow-sm p-4">
+        <div class="d-flex align-items-center mb-3">
+          <i class="fas fa-user-circle fa-4x text-primary me-4"></i>
+          <div>
+            <h1 class="fw-bold mb-0">{{ profile.name }}</h1>
+            <p class="text-muted lead mb-1">{{ profile.bio }}</p>
+
+            {# --- NEW: role badge --- #}
+            {% if profile.role == 'RECRUITER' %}
+              <span class="badge bg-primary">Recruiter</span>
+            {% else %}
+              <span class="badge bg-secondary">Job Seeker</span>
+            {% endif %}
+
+            {# --- NEW: recruiter email, only for recruiters --- #}
+            {% if profile.role == 'RECRUITER' and profile.email %}
+              <p class="mt-2 mb-0">
+                <i class="fas fa-envelope me-2"></i>
+                <a href="mailto:{{ profile.email }}" class="text-decoration-none">
+                  {{ profile.email }}
+                </a>
+              </p>
+            {% endif %}
+          </div>
+        </div>
+        {% if profile.user == request.user %}
+          <div class="d-flex justify-content-end">
+            <a href="{% url 'accounts.edit_profile' %}" class="btn btn-outline-primary fw-medium">
+              <i class="fas fa-edit me-2"></i>Edit Profile
+            </a>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="col-lg-9 mx-auto">
+      {% if profile.skills.all %}
+      <div class="card shadow-sm mb-4">
+        <div class="card-header bg-dark text-white fw-bold">
+          <i class="fas fa-cogs me-2"></i>Skills
+        </div>
+        <div class="card-body">
+          {% for skill in profile.skills.all %}
+          <span class="badge bg-secondary me-2 mb-2">{{ skill.name }}</span>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      {% if profile.experiences.all %}
+      <div class="card shadow-sm mb-4">
+        <div class="card-header bg-dark text-white fw-bold">
+          <i class="fas fa-briefcase me-2"></i>Experience
+        </div>
+        <div class="card-body">
+          <ul class="list-unstyled">
+            {% for experience in profile.experiences.all %}
+            <li class="mb-4 pb-3 border-bottom">
+              <h5 class="fw-bold">{{ experience.title }}</h5>
+              <p class="text-muted mb-1">{{ experience.company }}</p>
+              <small class="text-muted d-block mb-2">
+                {{ experience.start_year|date:"F Y" }} -
+                {% if experience.is_current %}Present{% else %}{{ experience.end_year|date:"F Y" }}{% endif %}
+              </small>
+              <p>{{ experience.description }}</p>
+            </li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+      {% endif %}
+
+      {% if profile.educations.all %}
+      <div class="card shadow-sm mb-4">
+        <div class="card-header bg-dark text-white fw-bold">
+          <i class="fas fa-graduation-cap me-2"></i>Education
+        </div>
+        <div class="card-body">
+          <ul class="list-unstyled">
+            {% for education in profile.educations.all %}
+            <li class="mb-4 pb-3 border-bottom">
+              <h5 class="fw-bold">{{ education.school }}</h5>
+              <p class="text-muted mb-1">{{ education.degree }} - {{ education.field_of_study }}</p>
+              <small class="text-muted d-block">
+                {{ education.start_year|date:"Y" }} -
+                {% if education.end_year %}{{ education.end_year|date:"Y" }}{% else %}Present{% endif %}
+              </small>
+            </li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+      {% endif %}
+
+      {% if profile.links.all %}
+      <div class="card shadow-sm mb-4">
+        <div class="card-header bg-dark text-white fw-bold">
+          <i class="fas fa-link me-2"></i>Links
+        </div>
+        <div class="card-body">
+          <ul class="list-unstyled">
+            {% for link in profile.links.all %}
+            <li class="mb-2">
+              <a href="{{ link.url }}" target="_blank" class="text-decoration-none">
+                <i class="fas fa-external-link-alt me-2"></i>{{ link.label }}
+              </a>
+            </li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock content %}

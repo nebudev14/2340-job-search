@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+
+{% block title %}Export Data - LockedIn{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="fas fa-file-csv me-2"></i>Export Data</h4>
+                </div>
+                <div class="card-body p-4">
+                    <p class="card-text text-muted">Select a data set to export as a CSV file for reporting and analysis.</p>
+                    <form method="POST">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="model_to_export" class="form-label fw-medium">Data to Export:</label>
+                            <select name="model_to_export" id="model_to_export" class="form-select">
+                                {% for option in export_options %}
+                                <option value="{{ option }}">{{ option }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100 mt-2">
+                            <i class="fas fa-download me-2"></i>Download CSV
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
