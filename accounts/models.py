@@ -15,6 +15,9 @@ class Profile(models.Model):
         max_length=20, choices=Role.choices, default=Role.JOB_SEEKER
     )
     email = models.EmailField(blank=True)
+    resume = models.FileField(
+        upload_to="user_resumes/", blank=True, null=True, help_text="Your default resume for one-click applications."
+    )
 
     def __str__(self):
         return f"{self.user.username} - {self.get_role_display()}"

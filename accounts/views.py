@@ -80,7 +80,7 @@ def edit_profile(request):
     profile = request.user.profile
 
     if request.method == "POST":
-        profile_form = ProfileForm(request.POST, instance=profile)
+        profile_form = ProfileForm(request.POST, request.FILES, instance=profile)
         skill_formset = SkillFormSet(request.POST, instance=profile, prefix="skills")
         education_formset = EducationFormSet(
             request.POST, instance=profile, prefix="education"

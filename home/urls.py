@@ -16,6 +16,11 @@ urlpatterns = [
     ),
     path("jobs/<int:job_id>/apply/", views.apply_for_job, name="apply_for_job"),
     path(
+        "jobs/<int:job_id>/one-click-apply/",
+        views.one_click_apply,
+        name="one_click_apply",
+    ),
+    path(
         "jobs/<int:job_id>/applications/",
         views.view_job_applications,
         name="view_job_applications",

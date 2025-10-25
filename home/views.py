@@ -2,7 +2,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
 from django.http import HttpResponseForbidden
-from django.http import JsonResponse, HttpResponse
+from django.http import JsonResponse, HttpResponse, HttpResponseBadRequest
 from accounts.models import Profile, Skill
 import csv
 from django.utils import timezone
@@ -212,7 +212,55 @@ def jobs_for_map_api(request):
 
 
 @login_required
+def one_click_apply(request, job_id):
+    """
+    Handles the 'one-click' application process via an AJAX request from a modal.
+    Uses the resume from the user's profile.
+    """
+    job = get_object_or_404(Job, id=job_id, is_active=True)
+    is_ajax = request.headers.get("x-requested-with") == "XMLHttpRequest"
+
+    if not is_ajax or request.method != "POST":
+        return HttpResponseBadRequest("Invalid request for one-click apply.")
+
+    # A job seeker must have a resume on their profile to use one-click apply.
+    if not request.user.profile.resume:
+        return JsonResponse(
+            {"error": "You must upload a resume to your profile to use one-click apply."},
+            status=400,
+        )
+
+    # Prevent recruiters from applying for jobs
+    if hasattr(request.user, "profile") and request.user.profile.role == "RECRUITER":
+        return JsonResponse(
+            {"error": "Recruiter accounts are not permitted to apply for jobs."},
+            status=403,
+        )
+
+    # Check if user has already applied
+    if JobApplication.objects.filter(job=job, applicant=request.user).exists():
+        return JsonResponse({"error": "You have already applied for this job."}, status=400)
+
+    # The form for one-click only needs the note
+    note = request.POST.get("note", "")
+
+    # Create the application
+    JobApplication.objects.create(
+        job=job,
+        applicant=request.user,
+        note=note,
+        resume=request.user.profile.resume,  # Use the profile resume
+    )
+
+    return JsonResponse({"message": "Your application has been submitted successfully!"})
+
+
+@login_required
 def apply_for_job(request, job_id):
+    """
+    Handles the standard, full-page application process where a user can
+    upload a custom resume.
+    """
     job = get_object_or_404(Job, id=job_id, is_active=True)
 
     # Prevent recruiters from applying for jobs
@@ -226,7 +274,6 @@ def apply_for_job(request, job_id):
     existing_application = JobApplication.objects.filter(
         job=job, applicant=request.user
     ).first()
-
     if existing_application:
         messages.warning(request, "You have already applied for this job.")
         return redirect("job_detail", job_id=job.id)
@@ -249,7 +296,6 @@ def apply_for_job(request, job_id):
         "job": job,
         "form": form,
     }
-
     return render(request, "home/apply_job.html", context)
 
 
