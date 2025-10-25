@@ -20,6 +20,10 @@ class Profile(models.Model):
         max_length=20, choices=Role.choices, default=Role.JOB_SEEKER
     )
     email = models.EmailField(blank=True)
+    location = models.CharField(max_length=255, blank=True)
+    latitude = models.FloatField(null=True, blank=True)
+    longitude = models.FloatField(null=True, blank=True)
+
     resume = models.FileField(
         upload_to="user_resumes/", blank=True, null=True, help_text="Your default resume for one-click applications."
     )

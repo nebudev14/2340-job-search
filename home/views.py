@@ -3,7 +3,8 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
 from django.http import HttpResponseForbidden
 from django.http import JsonResponse, HttpResponse, HttpResponseBadRequest
-from accounts.models import Profile, Skill
+from accounts.models import Profile, Skill 
+import json
 import csv
 from django.utils import timezone
 from math import radians, sin, cos, sqrt, atan2
@@ -483,6 +484,20 @@ def applicant_pipeline(request, job_id):
         .order_by("-applied_at")
     )
 
+    # NEW: Get applicant locations for the map
+    applicant_locations = []
+    for app in applications:
+        profile = app.applicant.profile
+        if profile.latitude and profile.longitude:
+            applicant_locations.append({
+                'id': app.id,
+                'name': profile.name or app.applicant.username,
+                'lat': profile.latitude,
+                'lon': profile.longitude,
+                'profile_url': reverse('accounts.profile_view', args=[app.applicant.username])
+            })
+
+
     # Group applications by status
     applications_by_status = {
         stage[0]: [] for stage in JobApplication.ApplicationStatus.choices
@@ -509,6 +524,7 @@ def applicant_pipeline(request, job_id):
         "job": job,
         "pipeline_stages": pipeline_stages_data,
         "status_choices": JobApplication.ApplicationStatus.choices,
+        "applicant_locations_json": json.dumps(applicant_locations),
     }
     return render(request, "home/applicant_pipeline.html", context)
 

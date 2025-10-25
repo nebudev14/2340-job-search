@@ -1,4 +1,16 @@
 {% extends 'base.html' %} 
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""/>
+<style>
+    #location-picker-map {
+        height: 300px;
+        border-radius: 0.5rem;
+        margin-top: 0.5rem;
+    }
+</style>
+{% endblock %}
 {% block content %}
 <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.7/dist/htmx.min.js"></script>
 
@@ -10,24 +22,47 @@
             <form method="post" enctype="multipart/form-data">
                 {% csrf_token %}
 
+                <!-- Render hidden fields first -->
+                {{ profile_form.latitude }}
+                {{ profile_form.longitude }}
+
                 <!-- Profile Information Section -->
                 <div class="card shadow-sm mb-4">
-                    <div class="card-header bg-dark text-white fw-bold">
-                        <i class="fas fa-user-circle me-2"></i>Profile Information
+                    <div class="card-header bg-dark text-white fw-bold d-flex justify-content-between align-items-center">
+                        <div><i class="fas fa-user-circle me-2"></i>Profile Information</div>
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="d-flex align-items-center gap-2">
+                                <label for="{{ profile_form.resume_visibility.id_for_label }}" class="mb-0 small fw-normal">Resume Visibility:</label>
+                                {{ profile_form.resume_visibility }}
+                            </div>
+                        </div>
                     </div>
                     <div class="card-body">
                         {{ profile_form.name.as_field_group }}
                         {{ profile_form.bio.as_field_group }}
-                        
-                        <div class="mb-3">
-                            <label for="{{ profile_form.resume.id_for_label }}" class="form-label">{{ profile_form.resume.label }}</label>
-                            {{ profile_form.resume }}
-                            <div class="form-text">{{ profile_form.resume.help_text }}</div>
-                        </div>
 
-                        <div class="row align-items-center">
-                            <div class="col-sm-3"><label for="{{ profile_form.resume_visibility.id_for_label }}" class="form-label fw-medium mb-0">Resume Visibility</label></div>
-                            <div class="col-sm-9">{{ profile_form.resume_visibility }}</div>
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                {{ profile_form.location.label_tag }}
+                                <button type="button" id="center-on-me-btn" class="btn btn-sm btn-outline-secondary" title="Center map on your location">
+                                    <i class="fas fa-crosshairs me-1"></i>Center on me
+                                </button>
+                            </div>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-map-marker-alt"></i></span>
+                                {{ profile_form.location }}
+                            </div>
+                            <div id="location-picker-map"></div>
+                            <small class="form-text text-muted">
+                                Enter a general location name above, then click the map to set the exact position.
+                            </small>
+                        </div>
+                        
+                        <div class="mb-2">
+                            <label for="{{ profile_form.resume.id_for_label }}" class="form-label fw-medium">{{ profile_form.resume.label }}</label>
+                            <div class="input-group">
+                                {{ profile_form.resume }}
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -203,3 +238,110 @@ document.body.addEventListener('htmx:afterSwap', function(evt) {
 });
 </script>
 {% endblock content %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const latField = document.getElementById('id_latitude');
+    const lonField = document.getElementById('id_longitude');
+    const locationField = document.getElementById('id_location');
+    const centerBtn = document.getElementById('center-on-me-btn');
+
+    let marker; // Marker instance
+    let map;    // Map instance
+
+    function setupMap(center, zoom) {
+        map = L.map('location-picker-map').setView(center, zoom);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        }).addTo(map);
+
+        // If editing, place the initial marker
+        if (latField.value && lonField.value) {
+            marker = L.marker([parseFloat(latField.value), parseFloat(lonField.value)]).addTo(map);
+        }
+
+        // When the map is clicked, update the location
+        map.on('click', function(e) {
+            const { lat, lng } = e.latlng;
+            updateLocation(lat, lng);
+        });
+    }
+
+    // NEW: Function to update location fields, marker, and reverse geocode
+    function updateLocation(lat, lng) {
+        latField.value = lat.toFixed(6);
+        lonField.value = lng.toFixed(6);
+        
+        const latLng = [lat, lng];
+
+        if (marker) {
+            marker.setLatLng(latLng);
+        } else {
+            marker = L.marker(latLng).addTo(map);
+        }
+        
+        // Reverse Geocoding to get a human-readable location name
+        const reverseGeocodeUrl = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`;
+        fetch(reverseGeocodeUrl)
+            .then(response => response.json())
+            .then(data => {
+                if (data && data.address) {
+                    const address = data.address;
+                    const locationParts = [
+                        address.city || address.town || address.village,
+                        address.state,
+                        address.country
+                    ].filter(Boolean);
+                    locationField.value = locationParts.join(', ');
+                }
+            })
+            .catch(error => console.error('Error with reverse geocoding:', error));
+    }
+    
+    // Determine initial center and zoom
+    let initialCenter = [39.8283, -98.5795]; // Default USA
+    let initialZoom = 4;
+
+    // If editing a profile with existing location, use its coordinates
+    if (latField.value && lonField.value) {
+        initialCenter = [parseFloat(latField.value), parseFloat(lonField.value)];
+        initialZoom = 12;
+    }
+    
+    setupMap(initialCenter, initialZoom);
+
+    // If no location is set, try to get user's current location to center the map
+    if (!latField.value && navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                const userLocation = [position.coords.latitude, position.coords.longitude];
+                map.setView(userLocation, 12);
+            },
+            () => { console.log("Geolocation failed or denied for edit_profile map."); }
+        );
+    } 
+
+    // NEW: Event listener for the "Center on me" button
+    centerBtn.addEventListener('click', function() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const { latitude, longitude } = position.coords;
+                    map.setView([latitude, longitude], 13); // Center the map
+                    updateLocation(latitude, longitude); // Update marker and fields
+                },
+                () => {
+                    alert("Could not get your location. Please ensure you have granted location permissions to your browser.");
+                }
+            );
+        } else {
+            alert("Geolocation is not supported by your browser.");
+        }
+    });
+});
+</script>
+{% endblock extra_js %}

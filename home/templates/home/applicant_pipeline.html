@@ -1,8 +1,19 @@
 {% extends 'base.html' %}
 
 {% block title %}Applicant Pipeline: {{ job.title }} - LockedIn{% endblock %}
-
-{% block content %}
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""/>
+<!-- Marker Cluster CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
+<style>
+    #applicant-map { 
+        height: 70vh; 
+        border-radius: 0.5rem;
+    }
+</style>
 <style>
     .kanban-board {
         display: flex;
@@ -37,6 +48,8 @@
         cursor: grabbing;
     }
 </style>
+{% endblock %}
+{% block content %}
 
 <div class="container-fluid my-5">
     <div class="d-flex justify-content-between align-items-center mb-4 px-4">
@@ -49,52 +62,73 @@
         </a>
     </div>
 
-    <div class="kanban-board">
-        {% for stage in pipeline_stages %}
-        <div class="kanban-column">
-            <div class="kanban-column-header">
-                {{ stage.label }}
-                <span class="badge bg-secondary rounded-pill float-end" data-count-for="{{ stage.key }}">{{ stage.applications|length }}</span>
-            </div>
-            <div class="kanban-cards" id="stage-{{ stage.key }}" data-status="{{ stage.key }}">
-                {% for application in stage.applications %}
-                <div class="card applicant-card shadow-sm" data-application-id="{{ application.id }}" id="application-{{ application.id }}">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <h5 class="card-title fs-6 fw-bold">
-                                <a href="{% url 'accounts.profile_view' username=application.applicant.username %}" class="text-decoration-none">{{ application.applicant.profile.name|default:application.applicant.username }}</a>
-                            </h5>
-                            <div class="dropdown">
-                                <button class="btn btn-sm btn-light py-0 px-2" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                    <i class="fas fa-ellipsis-v"></i>
-                                </button>
-                                <ul class="dropdown-menu">
-                                    <li><a class="dropdown-item" href="{% url 'accounts.profile_view' username=application.applicant.username %}">View Profile</a></li>
-                                    {% if application.resume or application.note %}
-                                    <li><hr class="dropdown-divider"></li>
-                                    {% endif %}
-                                    {% if application.note %}
-                                    <li>
-                                        <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#noteModal-{{ application.id }}">View Note</a>
-                                    </li>
-                                    {% endif %}
-                                    {% if application.resume %}
-                                    <li><a class="dropdown-item" href="{{ application.resume.url }}" target="_blank">View Resume</a></li>
-                                    {% endif %}
-                                </ul>
+    <!-- Tabs for Board and Map View -->
+    <ul class="nav nav-tabs mb-3" id="pipeline-tabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="board-view-tab" data-bs-toggle="tab" data-bs-target="#board-view" type="button" role="tab" aria-controls="board-view" aria-selected="true">
+                <i class="fas fa-columns me-2"></i>Board View
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="map-view-tab" data-bs-toggle="tab" data-bs-target="#map-view" type="button" role="tab" aria-controls="map-view" aria-selected="false">
+                <i class="fas fa-map-marked-alt me-2"></i>Map View
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="pipeline-tabs-content">
+        <div class="tab-pane fade show active" id="board-view" role="tabpanel" aria-labelledby="board-view-tab">
+            <div class="kanban-board">
+                {% for stage in pipeline_stages %}
+                <div class="kanban-column">
+                    <div class="kanban-column-header">
+                        {{ stage.label }}
+                        <span class="badge bg-secondary rounded-pill float-end" data-count-for="{{ stage.key }}">{{ stage.applications|length }}</span>
+                    </div>
+                    <div class="kanban-cards" id="stage-{{ stage.key }}" data-status="{{ stage.key }}">
+                        {% for application in stage.applications %}
+                        <div class="card applicant-card shadow-sm" data-application-id="{{ application.id }}" id="application-{{ application.id }}">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <h5 class="card-title fs-6 fw-bold">
+                                        <a href="{% url 'accounts.profile_view' username=application.applicant.username %}" class="text-decoration-none">{{ application.applicant.profile.name|default:application.applicant.username }}</a>
+                                    </h5>
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-light py-0 px-2" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                            <i class="fas fa-ellipsis-v"></i>
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            <li><a class="dropdown-item" href="{% url 'accounts.profile_view' username=application.applicant.username %}">View Profile</a></li>
+                                            {% if application.resume or application.note %}
+                                            <li><hr class="dropdown-divider"></li>
+                                            {% endif %}
+                                            {% if application.note %}
+                                            <li>
+                                                <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#noteModal-{{ application.id }}">View Note</a>
+                                            </li>
+                                            {% endif %}
+                                            {% if application.resume %}
+                                            <li><a class="dropdown-item" href="{{ application.resume.url }}" target="_blank">View Resume</a></li>
+                                            {% endif %}
+                                        </ul>
+                                    </div>
+                                </div>
+                                <p class="card-text small text-muted">Applied: {{ application.applied_at|timesince }} ago</p>
                             </div>
                         </div>
-                        <p class="card-text small text-muted">Applied: {{ application.applied_at|timesince }} ago</p>
+                        {% empty %}
+                        <div class="text-center text-muted p-3 small empty-stage-message">
+                            No applicants in this stage.
+                        </div>
+                        {% endfor %}
                     </div>
-                </div>
-                {% empty %}
-                <div class="text-center text-muted p-3 small empty-stage-message">
-                    No applicants in this stage.
                 </div>
                 {% endfor %}
             </div>
         </div>
-        {% endfor %}
+        <div class="tab-pane fade" id="map-view" role="tabpanel" aria-labelledby="map-view-tab">
+            <div id="applicant-map"></div>
+        </div>
     </div>
 </div>
 
@@ -119,8 +153,14 @@
     {% endfor %}
 {% endfor %}
 
+{% endblock content %}
+
+{% block extra_js %}
 <!-- Add SortableJS library -->
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+<!-- Leaflet and Marker Cluster -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
 
 <script>
 function showToast(message) {
@@ -232,6 +272,48 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
     });
+
+    // --- NEW: Applicant Map Logic ---
+    let applicantMap;
+    const applicantLocations = JSON.parse('{{ applicant_locations_json|escapejs }}');
+
+    // Function to initialize the map
+    function initializeMap() {
+        if (applicantMap) return; // Already initialized
+
+        applicantMap = L.map('applicant-map').setView([39.8283, -98.5795], 4); // Default to USA
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(applicantMap);
+
+        const markers = L.markerClusterGroup();
+
+        applicantLocations.forEach(applicant => {
+            const marker = L.marker([applicant.lat, applicant.lon]);
+            const popupContent = `
+                <h6 class="fw-bold mb-1">${applicant.name}</h6>
+                <a href="${applicant.profile_url}" class="btn btn-sm btn-primary text-white">View Profile</a>
+            `;
+            marker.bindPopup(popupContent);
+            markers.addLayer(marker);
+        });
+
+        applicantMap.addLayer(markers);
+
+        if (applicantLocations.length > 0) {
+            applicantMap.fitBounds(markers.getBounds().pad(0.1));
+        }
+    }
+
+    // Listen for the map tab being shown
+    const mapViewTab = document.getElementById('map-view-tab');
+    mapViewTab.addEventListener('shown.bs.tab', function () {
+        initializeMap();
+        // Invalidate map size to fix rendering issues when it's initialized in a hidden tab
+        setTimeout(() => {
+            if (applicantMap) applicantMap.invalidateSize();
+        }, 10);
+    });
 });
 </script>
-{% endblock content %}
+{% endblock extra_js %}

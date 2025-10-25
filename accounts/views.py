@@ -136,6 +136,11 @@ def edit_profile(request):
                 # Save all the related objects in the formsets
                 for formset in all_formsets:
                     formset.save()
+            
+            messages.success(
+                request,
+                "Your profile has been updated successfully!"
+            )
 
             return redirect("accounts.profile_view", username=request.user.username)
 

@@ -39,6 +39,9 @@ class ProfileForm(forms.ModelForm):
         fields = [
             "name",
             "bio",
+            "location",
+            "latitude",
+            "longitude",
             "resume",
             "skills_visibility",
             "education_visibility",
@@ -49,12 +52,16 @@ class ProfileForm(forms.ModelForm):
         widgets = {
             "name": forms.TextInput(attrs={"class": "form-control"}),
             "bio": forms.Textarea(attrs={"class": "form-control", "rows": 4}),
+            "location": forms.TextInput(attrs={"class": "form-control"}),
             "resume": forms.FileInput(attrs={"class": "form-control"}),
             "skills_visibility": forms.Select(attrs={"class": "form-select form-select-sm"}),
             "education_visibility": forms.Select(attrs={"class": "form-select form-select-sm"}),
             "experience_visibility": forms.Select(attrs={"class": "form-select form-select-sm"}),
             "links_visibility": forms.Select(attrs={"class": "form-select form-select-sm"}),
             "resume_visibility": forms.Select(attrs={"class": "form-select"}), # Keep this one normal size
+            # Hide lat/lon fields, they are controlled by the map JS
+            "latitude": forms.HiddenInput(),
+            "longitude": forms.HiddenInput(),
         }
         help_texts = {
             "resume": "Your default resume for one-click applications. Its visibility on your profile is controlled below.",
