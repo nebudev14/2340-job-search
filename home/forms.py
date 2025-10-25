@@ -8,7 +8,7 @@ class JobApplicationForm(forms.ModelForm):
         fields = ["note", "resume"]
         widgets = {
             "note": forms.Textarea(attrs={"class": "form-control", "rows": 5}),
-            "resume": forms.FileInput(attrs={"class": "form-control"})
+            "resume": forms.FileInput(attrs={"class": "form-control"}),
         }
 
 

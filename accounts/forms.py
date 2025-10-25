@@ -36,10 +36,11 @@ class CustomUserCreationForm(UserCreationForm):
 class ProfileForm(forms.ModelForm):
     class Meta:
         model = Profile
-        fields = ["name", "bio"]
+        fields = ["name", "bio", "resume"]
         widgets = {
             "name": forms.TextInput(attrs={"class": "form-control"}),
             "bio": forms.Textarea(attrs={"class": "form-control", "rows": 4}),
+            "resume": forms.FileInput(attrs={"class": "form-control"}),
         }
 
 
