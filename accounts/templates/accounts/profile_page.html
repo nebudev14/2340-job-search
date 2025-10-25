@@ -13,6 +13,9 @@
             {# --- NEW: role badge --- #}
             {% if profile.role == 'RECRUITER' %}
               <span class="badge bg-primary">Recruiter</span>
+              <p>{{ profile.email }}</p>
+            {% elif profile.role == 'ADMINISTRATOR' %}
+              <span class="badge bg-primary">Administrator</span>
             {% else %}
               <span class="badge bg-secondary">Job Seeker</span>
             {% endif %}

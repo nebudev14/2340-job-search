@@ -7,6 +7,8 @@ from django.contrib.auth import login as auth_login, logout as auth_logout
 from django.template.loader import render_to_string
 from django.forms import inlineformset_factory
 from django.db import transaction
+from django.contrib import messages  # NEW: for success/error alerts
+
 from accounts.forms import (
     BaseFormSet,
     CustomUserCreationForm,
@@ -17,6 +19,7 @@ from accounts.forms import (
     LinkFormSet,
 )
 from accounts.models import Profile, Skill, Education, Experience, Link
+from home.models import Job, JobApplication
 
 
 def signup(request):
@@ -29,17 +32,16 @@ def signup(request):
                 # We just need to update fields from the form.
                 user.profile.role = form.cleaned_data.get("role")
 
-                # --- NEW: store recruiter email if role is RECRUITER ---
+                # Store recruiter email if recruiter
                 if form.cleaned_data.get("role") == Profile.Role.RECRUITER:
                     user.profile.email = form.cleaned_data.get("email")
                 else:
-                    # optional: clear any previous value if switching away from recruiter
                     user.profile.email = ""
 
                 user.profile.save()
 
             auth_login(request, user)  # log the user in
-            return redirect("home.index")  # or wherever you want to redirect them
+            return redirect("home.index")
     else:
         form = CustomUserCreationForm()
 
@@ -94,8 +96,7 @@ def edit_profile(request):
             experience_formset,
             link_formset,
         ]
-        # The is_valid() call on a formset correctly handles validation for all its forms,
-        # including ignoring extra, empty forms.
+
         if profile_form.is_valid() and all(fs.is_valid() for fs in all_formsets):
             with transaction.atomic():
                 # Save the main profile object
@@ -105,8 +106,6 @@ def edit_profile(request):
                     formset.save()
 
             return redirect("accounts.profile_view", username=request.user.username)
-        # If any form or formset is invalid, Django will automatically add error messages
-        # to the form/formset objects, and the page will be re-rendered to display those errors.
 
     else:
         profile_form = ProfileForm(instance=profile)
@@ -128,7 +127,7 @@ def edit_profile(request):
 @login_required
 def manage_form_rows(request, formset_name):
     # Mapping for models and factories to prevent unbound errors
-    models = {
+    models_map = {
         "skills": Skill,
         "education": Education,
         "experience": Experience,
@@ -142,7 +141,7 @@ def manage_form_rows(request, formset_name):
         "links": LinkFormSet,
     }
 
-    ModelClass = models.get(formset_name)
+    ModelClass = models_map.get(formset_name)
     FormSetFactory = factories.get(formset_name)
 
     if not ModelClass or not FormSetFactory:
@@ -160,7 +159,6 @@ def manage_form_rows(request, formset_name):
         return HttpResponse(html_content)
 
     if request.method == "DELETE":  # Handle deleting an item
-        # The object ID to delete is passed in the request body by HTMX
         object_id = request.GET.get("object_id")
         if object_id:
             try:
@@ -170,12 +168,107 @@ def manage_form_rows(request, formset_name):
                 )
                 obj.delete()
             except:
-                # If object not found or doesn't belong to user, do nothing but don't error
+                # Silently ignore if not found / unauthorized
                 pass
-        # Create a response that will be swapped into the DOM (and thus remove the element).
         response = HttpResponse(status=200)
-        # Add a custom HTMX header to trigger a client-side event after the swap.
         response["HX-Trigger"] = f"formset-item-deleted-{formset_name}"
         return response
 
     return HttpResponseNotAllowed(["GET", "DELETE"])
+
+
+# =========================
+# Admin / Manage Users View
+# =========================
+def manage_users(request):
+    """
+    Admin dashboard:
+    - Shows all users
+    - Allows updating role
+    - Allows deleting users
+    Access control:
+    - request.user must be superuser OR have profile.role == "ADMINISTRATOR"
+    """
+
+    # Access control check
+    if not request.user.is_authenticated or (
+        not request.user.is_superuser and request.user.profile.role != "ADMINISTRATOR"
+    ):
+        return redirect("home.index")
+
+    # Get all profiles to show in the table
+    users = (
+        Profile.objects.select_related("user").all().order_by("role", "user__username")
+    )
+
+    if request.method == "POST":
+        action = request.POST.get("action")
+        user_id = request.POST.get("user_id")
+
+        # Fetch the target profile we want to operate on
+        target = get_object_or_404(Profile.objects.select_related("user"), id=user_id)
+
+        # ---------- DELETE USER FLOW ----------
+        if action == "delete":
+            # Safety rules:
+            # - You cannot delete yourself
+            # - You cannot delete another ADMINISTRATOR
+            if target.user == request.user:
+                messages.error(request, "You cannot delete your own account.")
+            elif target.role == "ADMINISTRATOR":
+                messages.error(request, "You cannot delete another administrator.")
+            else:
+                username = target.user.username
+                # Deleting the Django User will cascade and delete the Profile
+                target.user.delete()
+                messages.success(request, f"User '{username}' has been deleted.")
+            return redirect("accounts.manage_users")
+
+        # ---------- UPDATE ROLE FLOW ----------
+        if action == "update":
+            new_role = request.POST.get("new_role")
+
+            # Allowed roles are any defined in Profile.Role.choices.
+            valid_roles = [r[0] for r in Profile.Role.choices]
+            if new_role in valid_roles and target.role != new_role:
+                old_role = target.role
+
+                # --- NEW: Clean up data from the user's OLD role ---
+                # If they were a Job Seeker, delete their applications.
+                if old_role == Profile.Role.JOB_SEEKER:
+                    deleted_count, _ = JobApplication.objects.filter(
+                        applicant=target.user
+                    ).delete()
+                    if deleted_count > 0:
+                        messages.info(
+                            request,
+                            f"Cleared {deleted_count} job application(s) for {target.user.username}.",
+                        )
+
+                # If they were a Recruiter, delete their job postings.
+                if old_role == Profile.Role.RECRUITER:
+                    deleted_count, _ = Job.objects.filter(
+                        posted_by=target.user
+                    ).delete()
+                    if deleted_count > 0:
+                        messages.info(
+                            request,
+                            f"Cleared {deleted_count} job posting(s) for {target.user.username}.",
+                        )
+
+                target.role = new_role
+                target.save()
+                messages.success(
+                    request,
+                    f"{target.user.username}'s role updated to {target.get_role_display()}.",
+                )
+            elif new_role not in valid_roles:
+                messages.error(request, "Invalid role selection.")
+            return redirect("accounts.manage_users")
+
+        # If somehow neither delete nor update:
+        messages.error(request, "Unknown action.")
+        return redirect("accounts.manage_users")
+
+    # GET request: render the page
+    return render(request, "accounts/manage_users.html", {"users": users})

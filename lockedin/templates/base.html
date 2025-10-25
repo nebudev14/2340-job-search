@@ -55,7 +55,7 @@
           <li class="nav-item">
             <a class="nav-link fw-medium" href="{% url 'home.index' %}"><i class="fas fa-home me-1"></i>Home</a>
           </li>
-          {% if not user.is_authenticated or user.profile.role == 'JOB_SEEKER' %}
+          {% if not user.is_authenticated or user.profile.role == 'JOB_SEEKER' or user.profile.role == 'ADMINISTRATOR' %}
           <li class="nav-item">
             <a class="nav-link fw-medium" href="{% url 'job_list' %}"><i class="fas fa-search me-1"></i>Find Jobs</a>
           </li>
@@ -63,7 +63,7 @@
             <a class="nav-link fw-medium" href="{% url 'job_map' %}"><i class="fas fa-map-marked-alt me-1"></i>Job Map</a>
           </li>
           {% endif %}
-          {% if user.is_authenticated and user.profile.role == 'RECRUITER' %}
+          {% if user.is_authenticated and user.profile.role == 'RECRUITER' or user.is_authenticated and user.profile.role == 'ADMINISTRATOR' %}
           <li class="nav-item">
             <a class="nav-link fw-medium" href="{% url 'post_job' %}"><i class="fas fa-plus me-1"></i>Post Job</a>
           </li>
@@ -80,7 +80,7 @@
                 <a class="dropdown-item" href="{% url 'accounts.profile_view' username=user.username %}"><i
                     class="fas fa-user-circle me-2"></i>Profile</a>
               </li>
-              {% if user.profile.role == 'RECRUITER' %}
+              {% if user.profile.role == 'RECRUITER' or user.profile.role == 'ADMINISTRATOR' %}
                 <li>
                   <a class="dropdown-item" href="{% url 'my_jobs' %}"><i class="fas fa-list-alt me-2"></i>Manage Jobs</a>
                 </li>
@@ -94,6 +94,16 @@
                   <a class="dropdown-item" href="{% url 'admin_export_data' %}"><i class="fas fa-file-export me-2"></i>Export Data</a>
                 </li>
               {% endif %}
+
+              {# NEW: Admin-only "Manage Users" link #}
+              {% if user.profile.role == 'ADMINISTRATOR' %}
+                <li>
+                  <a class="dropdown-item" href="{% url 'accounts.manage_users' %}">
+                    <i class="fas fa-users-cog me-2"></i>Manage Users
+                  </a>
+                </li>
+              {% endif %}
+
               <li>
                 <hr class="dropdown-divider" />
               </li>
@@ -126,7 +136,9 @@
     </div>
     {% endfor %}
   </div>
-  {% endif %} {% block content %} {% endblock content %}
+  {% endif %}
+
+  {% block content %} {% endblock content %}
 
   <!-- Toast Container for dynamic notifications -->
   <div class="toast-container position-fixed bottom-0 end-0 p-3">
