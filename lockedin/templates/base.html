@@ -68,6 +68,16 @@
             <a class="nav-link fw-medium" href="{% url 'post_job' %}"><i class="fas fa-plus me-1"></i>Post Job</a>
           </li>
           {% endif %}
+          {% if user.is_authenticated %}
+          <li class="nav-item">
+            <a class="nav-link fw-medium" href="{% url 'messaging.inbox' %}">
+              <i class="fas fa-envelope me-1"></i>Messages
+              {% if unread_messages_count > 0 %}
+                <span class="badge bg-danger rounded-pill ms-1">{{ unread_messages_count }}</span>
+              {% endif %}
+            </a>
+          </li>
+          {% endif %}
         </ul>
         <div class="d-flex">
           {% if user.is_authenticated %}
@@ -104,6 +114,14 @@
                 </li>
               {% endif %}
 
+              <li>
+                <a class="dropdown-item" href="{% url 'messaging.inbox' %}">
+                  <i class="fas fa-envelope me-2"></i>Messages
+                  {% if unread_messages_count > 0 %}
+                    <span class="badge bg-danger rounded-pill ms-1">{{ unread_messages_count }}</span>
+                  {% endif %}
+                </a>
+              </li>
               <li>
                 <hr class="dropdown-divider" />
               </li>

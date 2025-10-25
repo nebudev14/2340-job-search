@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+
+{% block title %}Messages - LockedIn{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold"><i class="fas fa-inbox me-2"></i>Messages</h2>
+        <a href="{% url 'messaging.compose' %}" class="btn btn-primary">
+          <i class="fas fa-plus me-2"></i>New Message
+        </a>
+      </div>
+
+      {% if conversations %}
+        <div class="card shadow-sm">
+          <div class="list-group list-group-flush">
+            {% for conv in conversations %}
+              <a href="{% url 'messaging.conversation' username=conv.user.username %}" 
+                 class="list-group-item list-group-item-action {% if conv.unread_count > 0 %}bg-light{% endif %}">
+                <div class="d-flex w-100 justify-content-between align-items-center">
+                  <div class="flex-grow-1">
+                    <div class="d-flex align-items-center mb-1">
+                      <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-3" 
+                           style="width: 50px; height: 50px;">
+                        <i class="fas fa-user fa-lg"></i>
+                      </div>
+                      <div>
+                        <h5 class="mb-1 {% if conv.unread_count > 0 %}fw-bold{% endif %}">
+                          {{ conv.user.username }}
+                          {% if conv.user.profile.role %}
+                            <span class="badge bg-secondary ms-2">{{ conv.user.profile.get_role_display }}</span>
+                          {% endif %}
+                        </h5>
+                        <p class="mb-0 text-muted small">
+                          <strong>{% if conv.latest_message.sender == user %}You:{% else %}{{ conv.latest_message.sender.username }}:{% endif %}</strong>
+                          {{ conv.latest_message.content|truncatewords:10 }}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="text-end ms-3">
+                    <small class="text-muted">{{ conv.latest_message.timestamp|timesince }} ago</small>
+                    {% if conv.unread_count > 0 %}
+                      <div class="badge bg-primary rounded-pill mt-2">
+                        {{ conv.unread_count }} new
+                      </div>
+                    {% endif %}
+                  </div>
+                </div>
+              </a>
+            {% endfor %}
+          </div>
+        </div>
+      {% else %}
+        <div class="card shadow-sm text-center py-5">
+          <div class="card-body">
+            <i class="fas fa-inbox fa-4x text-muted mb-3"></i>
+            <h4 class="text-muted">No messages yet</h4>
+            <p class="text-muted mb-4">Start a conversation with other users</p>
+            <a href="{% url 'messaging.compose' %}" class="btn btn-primary">
+              <i class="fas fa-plus me-2"></i>Compose Message
+            </a>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+
