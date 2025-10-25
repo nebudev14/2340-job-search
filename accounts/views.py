@@ -19,6 +19,7 @@ from accounts.forms import (
     LinkFormSet,
 )
 from accounts.models import Profile, Skill, Education, Experience, Link
+from home.models import Job, JobApplication
 
 
 def signup(request):
@@ -208,7 +209,7 @@ def manage_users(request):
         user_id = request.POST.get("user_id")
 
         # Fetch the target profile we want to operate on
-        target = get_object_or_404(Profile, id=user_id)
+        target = get_object_or_404(Profile.objects.select_related('user'), id=user_id)
 
         # ---------- DELETE USER FLOW ----------
         if action == "delete":
@@ -232,14 +233,29 @@ def manage_users(request):
 
             # Allowed roles are any defined in Profile.Role.choices.
             valid_roles = [r[0] for r in Profile.Role.choices]
-            if new_role in valid_roles:
+            if new_role in valid_roles and target.role != new_role:
+                old_role = target.role
+
+                # --- NEW: Clean up data from the user's OLD role ---
+                # If they were a Job Seeker, delete their applications.
+                if old_role == Profile.Role.JOB_SEEKER:
+                    deleted_count, _ = JobApplication.objects.filter(applicant=target.user).delete()
+                    if deleted_count > 0:
+                        messages.info(request, f"Cleared {deleted_count} job application(s) for {target.user.username}.")
+
+                # If they were a Recruiter, delete their job postings.
+                if old_role == Profile.Role.RECRUITER:
+                    deleted_count, _ = Job.objects.filter(posted_by=target.user).delete()
+                    if deleted_count > 0:
+                        messages.info(request, f"Cleared {deleted_count} job posting(s) for {target.user.username}.")
+
                 target.role = new_role
                 target.save()
                 messages.success(
                     request,
                     f"{target.user.username}'s role updated to {target.get_role_display()}."
                 )
-            else:
+            elif new_role not in valid_roles:
                 messages.error(request, "Invalid role selection.")
             return redirect("accounts.manage_users")
 

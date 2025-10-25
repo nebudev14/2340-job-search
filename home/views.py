@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
 from django.http import HttpResponseForbidden
 from django.http import JsonResponse, HttpResponse
+from accounts.models import Profile
 import csv
 from django.utils import timezone
 from math import radians, sin, cos, sqrt, atan2
@@ -15,16 +16,16 @@ from .forms import JobApplicationForm, JobForm
 
 def is_recruiter(user):
     """
-    Check if the user is a recruiter OR a staff member.
+    Check if the user is a recruiter, administrator, or staff member.
     This is used by the @user_passes_test decorator.
     """
     if not user.is_authenticated:
         return False
-    # Allow staff members (admins) to pass
+    # Allow staff members to pass
     if user.is_staff:
         return True
     # Assumes a 'profile' related object with a 'role' attribute exists.
-    return hasattr(user, "profile") and user.profile.role == "RECRUITER"
+    return hasattr(user, "profile") and user.profile.role in [Profile.Role.RECRUITER, Profile.Role.ADMINISTRATOR]
 
 
 def index(request):
@@ -254,7 +255,7 @@ def my_jobs(request):
     Displays a list of jobs. For recruiters, it shows only their own jobs.
     For admins/staff, it shows all jobs on the platform.
     """
-    if request.user.is_staff:
+    if request.user.is_staff or (hasattr(request.user, 'profile') and request.user.profile.role == Profile.Role.ADMINISTRATOR):
         jobs = Job.objects.all().order_by("-created_at")
     else:
         jobs = Job.objects.filter(posted_by=request.user).order_by("-created_at")
