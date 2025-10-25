@@ -3,15 +3,44 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
 from django.http import HttpResponseForbidden
 from django.http import JsonResponse, HttpResponse
-from accounts.models import Profile
+from accounts.models import Profile, Skill
 import csv
 from django.utils import timezone
 from math import radians, sin, cos, sqrt, atan2
 from django.core.paginator import Paginator
 from django.db.models import Q
-from .models import Job, Company, JobApplication
+from .models import Job, Company, JobApplication, SavedSearch
 from django.urls import reverse
-from .forms import JobApplicationForm, JobForm
+from .forms import JobApplicationForm, JobForm, SavedSearchForm
+
+
+def get_recommended_jobs(user):
+    """
+    Get job recommendations for a job seeker based on their skills.
+    Returns jobs that match the user's skills in the job description or requirements.
+    """
+    if not hasattr(user, 'profile'):
+        return []
+    
+    user_skills = Skill.objects.filter(profile=user.profile).values_list('name', flat=True)
+    
+    if not user_skills:
+        return []
+    
+    skill_query = Q()
+    for skill in user_skills:
+        skill_query |= Q(description__icontains=skill) | Q(requirements__icontains=skill)
+    
+    applied_job_ids = JobApplication.objects.filter(applicant=user).values_list('job_id', flat=True)
+    
+    recommended_jobs = Job.objects.filter(
+        is_active=True
+    ).filter(
+        skill_query
+    ).exclude(
+        id__in=applied_job_ids
+    ).order_by('-created_at')[:10]      
+    return recommended_jobs
 
 
 def is_recruiter(user):
@@ -28,11 +57,15 @@ def is_recruiter(user):
 
 
 def index(request):
-    # Get featured jobs (latest 3 active jobs)
     featured_jobs = Job.objects.filter(is_active=True)[:3]
+    
+    recommended_jobs = []
+    if request.user.is_authenticated and hasattr(request.user, 'profile') and request.user.profile.role == Profile.Role.JOB_SEEKER:
+        recommended_jobs = get_recommended_jobs(request.user)
 
     template_data = {
         "featured_jobs": featured_jobs,
+        "recommended_jobs": recommended_jobs,
     }
     return render(request, "home/index.html", {"template_data": template_data})
 
@@ -510,3 +543,211 @@ def admin_export_data(request):
 
     context = {"export_options": MODELS_TO_EXPORT.keys()}
     return render(request, "home/admin_export.html", context)
+
+
+@login_required
+@user_passes_test(is_recruiter, login_url="home.index")
+def candidate_search(request):
+    """
+    Search for job seekers/candidates based on various criteria.
+    """
+    from accounts.models import Profile
+    
+    # Start with all job seeker profiles
+    candidates = Profile.objects.filter(role=Profile.Role.JOB_SEEKER).select_related('user')
+    
+    # Search functionality
+    skills_query = request.GET.get("skills", "")
+    if skills_query:
+        skills_list = [skill.strip().lower() for skill in skills_query.split(',') if skill.strip()]
+        if skills_list:
+            skill_query = Q()
+            for skill in skills_list:
+                skill_query |= Q(skills__name__icontains=skill)
+            candidates = candidates.filter(skill_query).distinct()
+    
+    # Location filter
+    location = request.GET.get("location", "")
+    if location:
+        candidates = candidates.filter(
+            Q(bio__icontains=location) |
+            Q(experiences__company__icontains=location)
+        ).distinct()
+    
+    # Experience years filter
+    experience_years = request.GET.get("experience_years", "")
+    if experience_years:
+        try:
+            years = int(experience_years)
+            candidates = candidates.filter(experiences__isnull=False).distinct()
+        except ValueError:
+            pass
+    
+    # Education level filter
+    education_level = request.GET.get("education_level", "")
+    if education_level:
+        candidates = candidates.filter(
+            educations__degree__icontains=education_level
+        ).distinct()
+    
+    # Current company filter
+    current_company = request.GET.get("current_company", "")
+    if current_company:
+        candidates = candidates.filter(
+            experiences__company__icontains=current_company,
+            experiences__is_current=True
+        ).distinct()
+    
+    # Pagination
+    paginator = Paginator(candidates, 10)
+    page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        "candidates": page_obj,
+        "skills_query": skills_query,
+        "location": location,
+        "experience_years": experience_years,
+        "education_level": education_level,
+        "current_company": current_company,
+    }
+    return render(request, "home/candidate_search.html", context)
+
+
+@login_required
+@user_passes_test(is_recruiter, login_url="home.index")
+def saved_searches(request):
+    """
+    Display and manage saved searches for the current recruiter.
+    """
+    saved_searches = SavedSearch.objects.filter(recruiter=request.user)
+    
+    # Get new matches for each search
+    searches_with_matches = []
+    for search in saved_searches:
+        new_matches = search.get_new_matches_since_last_notification()
+        searches_with_matches.append({
+            'search': search,
+            'new_matches_count': new_matches.count(),
+            'new_matches': new_matches[:5]  # Show first 5 new matches
+        })
+    
+    context = {
+        "searches_with_matches": searches_with_matches,
+    }
+    return render(request, "home/saved_searches.html", context)
+
+
+@login_required
+@user_passes_test(is_recruiter, login_url="home.index")
+def save_search(request):
+    """
+    Save current search criteria as a saved search.
+    """
+    if request.method == "POST":
+        form = SavedSearchForm(request.POST)
+        if form.is_valid():
+            saved_search = form.save(commit=False)
+            saved_search.recruiter = request.user
+            saved_search.save()
+            messages.success(request, f"Search '{saved_search.name}' saved successfully!")
+            return redirect("saved_searches")
+    else:
+        # Pre-populate form with current search parameters
+        initial_data = {
+            'skills_query': request.GET.get('skills', ''),
+            'location': request.GET.get('location', ''),
+            'experience_years': request.GET.get('experience_years', ''),
+            'education_level': request.GET.get('education_level', ''),
+            'current_company': request.GET.get('current_company', ''),
+        }
+        form = SavedSearchForm(initial=initial_data)
+    
+    context = {
+        "form": form,
+        "current_search_params": request.GET,
+    }
+    return render(request, "home/save_search.html", context)
+
+
+@login_required
+@user_passes_test(is_recruiter, login_url="home.index")
+def edit_saved_search(request, search_id):
+    """
+    Edit an existing saved search.
+    """
+    saved_search = get_object_or_404(SavedSearch, id=search_id, recruiter=request.user)
+    
+    if request.method == "POST":
+        form = SavedSearchForm(request.POST, instance=saved_search)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f"Search '{saved_search.name}' updated successfully!")
+            return redirect("saved_searches")
+    else:
+        form = SavedSearchForm(instance=saved_search)
+    
+    context = {
+        "form": form,
+        "saved_search": saved_search,
+    }
+    return render(request, "home/edit_saved_search.html", context)
+
+
+@login_required
+@user_passes_test(is_recruiter, login_url="home.index")
+def delete_saved_search(request, search_id):
+    """
+    Delete a saved search.
+    """
+    saved_search = get_object_or_404(SavedSearch, id=search_id, recruiter=request.user)
+    
+    if request.method == "POST":
+        search_name = saved_search.name
+        saved_search.delete()
+        messages.success(request, f"Search '{search_name}' deleted successfully!")
+        return redirect("saved_searches")
+    
+    context = {
+        "saved_search": saved_search,
+    }
+    return render(request, "home/delete_saved_search.html", context)
+
+
+@login_required
+@user_passes_test(is_recruiter, login_url="home.index")
+def run_saved_search(request, search_id):
+    """
+    Run a saved search and display candidate results.
+    """
+    saved_search = get_object_or_404(SavedSearch, id=search_id, recruiter=request.user)
+    candidates = saved_search.get_matching_candidates()
+    
+    # Pagination
+    paginator = Paginator(candidates, 10)
+    page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        "saved_search": saved_search,
+        "candidates": page_obj,
+    }
+    return render(request, "home/saved_search_results.html", context)
+
+
+@login_required
+@user_passes_test(is_recruiter, login_url="home.index")
+def toggle_search_notifications(request, search_id):
+    """
+    Toggle notification settings for a saved search.
+    """
+    saved_search = get_object_or_404(SavedSearch, id=search_id, recruiter=request.user)
+    
+    if request.method == "POST":
+        saved_search.is_active = not saved_search.is_active
+        saved_search.save()
+        
+        status_text = "enabled" if saved_search.is_active else "disabled"
+        messages.success(request, f"Notifications for '{saved_search.name}' {status_text}.")
+    
+    return redirect("saved_searches")

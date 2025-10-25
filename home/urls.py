@@ -27,4 +27,12 @@ urlpatterns = [
     path('management/export/', views.admin_export_data, name='admin_export_data'),
     path('jobs/map/', views.job_map, name='job_map'),
     path('api/jobs-for-map/', views.jobs_for_map_api, name='jobs_for_map_api'),
+    # Candidate search and saved searches
+    path('candidates/', views.candidate_search, name='candidate_search'),
+    path('saved-searches/', views.saved_searches, name='saved_searches'),
+    path('save-search/', views.save_search, name='save_search'),
+    path('saved-searches/<int:search_id>/edit/', views.edit_saved_search, name='edit_saved_search'),
+    path('saved-searches/<int:search_id>/delete/', views.delete_saved_search, name='delete_saved_search'),
+    path('saved-searches/<int:search_id>/run/', views.run_saved_search, name='run_saved_search'),
+    path('saved-searches/<int:search_id>/toggle-notifications/', views.toggle_search_notifications, name='toggle_search_notifications'),
 ]
