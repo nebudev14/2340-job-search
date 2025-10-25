@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block title %}Delete Search - LockedIn{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0"><i class="fas fa-trash me-2"></i>Delete Saved Search</h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Warning:</strong> This action cannot be undone.
+                    </div>
+                    
+                    <p>Are you sure you want to delete the saved search:</p>
+                    <div class="bg-light p-3 rounded mb-3">
+                        <h5 class="fw-bold mb-2">{{ saved_search.name }}</h5>
+                        <div class="text-muted">
+                            <small>
+                                <i class="fas fa-clock me-1"></i>
+                                Created {{ saved_search.created_at|date:"M d, Y" }}
+                            </small>
+                        </div>
+                    </div>
+                    
+                    <form method="POST">
+                        {% csrf_token %}
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'saved_searches' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-trash me-2"></i>Delete Search
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}

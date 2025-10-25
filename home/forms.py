@@ -1,5 +1,5 @@
 from django import forms
-from .models import Job, Company, JobApplication
+from .models import Job, Company, JobApplication, SavedSearch
 
 
 class JobApplicationForm(forms.ModelForm):
@@ -64,3 +64,18 @@ class JobForm(forms.ModelForm):
         if not company and not new_company_name:
             raise forms.ValidationError("You must either select an existing company or provide a new company name.")
         return cleaned_data
+
+
+class SavedSearchForm(forms.ModelForm):
+    class Meta:
+        model = SavedSearch
+        fields = ['name', 'skills_query', 'location', 'experience_years', 'education_level', 'current_company', 'is_active']
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g., Senior Python Developers'}),
+            'skills_query': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Python, JavaScript, React (comma-separated)'}),
+            'location': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'City, state, or remote'}),
+            'experience_years': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g., 5'}),
+            'education_level': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g., Bachelor, Master, PhD'}),
+            'current_company': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g., Google, Microsoft'}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }

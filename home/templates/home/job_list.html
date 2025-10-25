@@ -64,6 +64,12 @@
                         
                         <button type="submit" class="btn btn-primary w-100">Apply Filters</button>
                         <a href="{% url 'job_list' %}" class="btn btn-outline-secondary w-100 mt-2">Clear All</a>
+                        
+                        {% if user.is_authenticated and user.profile.role == 'RECRUITER' %}
+                        <a href="{% url 'save_search' %}?{{ request.GET.urlencode }}" class="btn btn-success w-100 mt-2">
+                            <i class="fas fa-bookmark me-2"></i>Save Search
+                        </a>
+                        {% endif %}
                     </form>
                 </div>
             </div>

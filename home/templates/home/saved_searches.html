@@ -1,0 +1,151 @@
+{% extends 'base.html' %}
+
+{% block title %}Saved Searches - LockedIn{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2 class="fw-bold"><i class="fas fa-bookmark me-2 text-primary"></i>Saved Searches</h2>
+                    <p class="text-muted mb-0">Manage your saved job searches and get notified of new matches</p>
+                </div>
+                <a href="{% url 'save_search' %}" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>Create New Search
+                </a>
+            </div>
+            
+            {% if searches_with_matches %}
+            <div class="row">
+                {% for search_data in searches_with_matches %}
+                {% with search=search_data.search new_matches_count=search_data.new_matches_count new_matches=search_data.new_matches %}
+                <div class="col-lg-6 mb-4">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div>
+                                    <h5 class="fw-bold mb-1">{{ search.name }}</h5>
+                                    <p class="text-muted mb-0">
+                                        <small>
+                                            <i class="fas fa-clock me-1"></i>
+                                            Created {{ search.created_at|date:"M d, Y" }}
+                                        </small>
+                                    </p>
+                                </div>
+                                <div class="dropdown">
+                                    <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                        <i class="fas fa-ellipsis-v"></i>
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item" href="{% url 'run_saved_search' search.id %}">
+                                            <i class="fas fa-search me-2"></i>Run Search
+                                        </a></li>
+                                        <li><a class="dropdown-item" href="{% url 'edit_saved_search' search.id %}">
+                                            <i class="fas fa-edit me-2"></i>Edit
+                                        </a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li><a class="dropdown-item text-danger" href="{% url 'delete_saved_search' search.id %}">
+                                            <i class="fas fa-trash me-2"></i>Delete
+                                        </a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                            
+                            <!-- Search Criteria -->
+                            <div class="mb-3">
+                                {% if search.skills_query %}
+                                <span class="badge bg-light text-dark me-1 mb-1">
+                                    <i class="fas fa-code me-1"></i>{{ search.skills_query }}
+                                </span>
+                                {% endif %}
+                                {% if search.location %}
+                                <span class="badge bg-light text-dark me-1 mb-1">
+                                    <i class="fas fa-map-marker-alt me-1"></i>{{ search.location }}
+                                </span>
+                                {% endif %}
+                                {% if search.experience_years %}
+                                <span class="badge bg-light text-dark me-1 mb-1">
+                                    <i class="fas fa-chart-line me-1"></i>{{ search.experience_years }} years
+                                </span>
+                                {% endif %}
+                                {% if search.education_level %}
+                                <span class="badge bg-light text-dark me-1 mb-1">
+                                    <i class="fas fa-graduation-cap me-1"></i>{{ search.education_level }}
+                                </span>
+                                {% endif %}
+                                {% if search.current_company %}
+                                <span class="badge bg-light text-dark me-1 mb-1">
+                                    <i class="fas fa-building me-1"></i>{{ search.current_company }}
+                                </span>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- New Matches Alert -->
+                            {% if new_matches_count > 0 %}
+                            <div class="alert alert-info mb-3">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-bell text-primary me-2"></i>
+                                    <strong>{{ new_matches_count }} new match{{ new_matches_count|pluralize }} found!</strong>
+                                </div>
+                                {% if new_matches %}
+                                <div class="mt-2">
+                                    <small class="text-muted">Recent matches:</small>
+                                    <div class="mt-1">
+                                        {% for candidate in new_matches %}
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <span class="small">{{ candidate.name }} ({{ candidate.user.username }})</span>
+                                            <a href="{% url 'accounts.profile_view' username=candidate.user.username %}" class="btn btn-outline-primary btn-xs">View</a>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                            
+                            <!-- Notification Status -->
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center">
+                                    <form method="POST" action="{% url 'toggle_search_notifications' search.id %}" class="d-inline">
+                                        {% csrf_token %}
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" 
+                                                   {% if search.is_active %}checked{% endif %}
+                                                   onchange="this.form.submit()">
+                                            <label class="form-check-label">
+                                                <small class="text-muted">
+                                                    {% if search.is_active %}
+                                                        <i class="fas fa-bell text-success me-1"></i>Notifications ON
+                                                    {% else %}
+                                                        <i class="fas fa-bell-slash text-muted me-1"></i>Notifications OFF
+                                                    {% endif %}
+                                                </small>
+                                            </label>
+                                        </div>
+                                    </form>
+                                </div>
+                                <a href="{% url 'run_saved_search' search.id %}" class="btn btn-primary btn-sm">
+                                    <i class="fas fa-search me-1"></i>View Results
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endwith %}
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-bookmark fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">No saved searches yet</h5>
+                <p class="text-muted">Create your first saved search to get notified of new job matches</p>
+                <a href="{% url 'save_search' %}" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>Create Your First Search
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock content %}

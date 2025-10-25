@@ -67,6 +67,9 @@
           <li class="nav-item">
             <a class="nav-link fw-medium" href="{% url 'post_job' %}"><i class="fas fa-plus me-1"></i>Post Job</a>
           </li>
+          <li class="nav-item">
+            <a class="nav-link fw-medium" href="{% url 'candidate_search' %}"><i class="fas fa-users me-1"></i>Find Candidates</a>
+          </li>
           {% endif %}
           {% if user.is_authenticated %}
           <li class="nav-item">
@@ -93,6 +96,9 @@
               {% if user.profile.role == 'RECRUITER' or user.profile.role == 'ADMINISTRATOR' %}
                 <li>
                   <a class="dropdown-item" href="{% url 'my_jobs' %}"><i class="fas fa-list-alt me-2"></i>Manage Jobs</a>
+                </li>
+                <li>
+                  <a class="dropdown-item" href="{% url 'saved_searches' %}"><i class="fas fa-bookmark me-2"></i>Saved Searches</a>
                 </li>
               {% else %}
                 <li>

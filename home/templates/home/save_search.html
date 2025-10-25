@@ -1,0 +1,130 @@
+{% extends 'base.html' %}
+
+{% block title %}Save Search - LockedIn{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="fas fa-bookmark me-2"></i>Save Search</h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-12 mb-3">
+                                <label class="form-label fw-medium">Search Name *</label>
+                                {{ form.name }}
+                                {% if form.name.errors %}
+                                    <div class="text-danger small">{{ form.name.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-medium">Skills</label>
+                                {{ form.skills_query }}
+                                {% if form.skills_query.errors %}
+                                    <div class="text-danger small">{{ form.skills_query.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-medium">Location</label>
+                                {{ form.location }}
+                                {% if form.location.errors %}
+                                    <div class="text-danger small">{{ form.location.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-medium">Experience Years</label>
+                                {{ form.experience_years }}
+                                {% if form.experience_years.errors %}
+                                    <div class="text-danger small">{{ form.experience_years.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-medium">Education Level</label>
+                                {{ form.education_level }}
+                                {% if form.education_level.errors %}
+                                    <div class="text-danger small">{{ form.education_level.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-medium">Current Company</label>
+                                {{ form.current_company }}
+                                {% if form.current_company.errors %}
+                                    <div class="text-danger small">{{ form.current_company.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="form-check form-switch mt-4">
+                                    {{ form.is_active }}
+                                    <label class="form-check-label fw-medium">
+                                        Enable notifications for new matches
+                                    </label>
+                                </div>
+                                {% if form.is_active.errors %}
+                                    <div class="text-danger small">{{ form.is_active.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <!-- Current Search Parameters Display -->
+                        {% if current_search_params %}
+                        <div class="alert alert-info">
+                            <h6 class="fw-bold mb-2"><i class="fas fa-info-circle me-2"></i>Current Search Parameters</h6>
+                            <div class="row">
+                                {% if current_search_params.skills %}
+                                <div class="col-md-6 mb-1">
+                                    <strong>Skills:</strong> {{ current_search_params.skills }}
+                                </div>
+                                {% endif %}
+                                {% if current_search_params.location %}
+                                <div class="col-md-6 mb-1">
+                                    <strong>Location:</strong> {{ current_search_params.location }}
+                                </div>
+                                {% endif %}
+                                {% if current_search_params.experience_years %}
+                                <div class="col-md-6 mb-1">
+                                    <strong>Experience Years:</strong> {{ current_search_params.experience_years }}
+                                </div>
+                                {% endif %}
+                                {% if current_search_params.education_level %}
+                                <div class="col-md-6 mb-1">
+                                    <strong>Education:</strong> {{ current_search_params.education_level }}
+                                </div>
+                                {% endif %}
+                                {% if current_search_params.current_company %}
+                                <div class="col-md-6 mb-1">
+                                    <strong>Current Company:</strong> {{ current_search_params.current_company }}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'saved_searches' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Back to Saved Searches
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Save Search
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
