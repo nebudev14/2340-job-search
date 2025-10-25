@@ -8,6 +8,11 @@ class Profile(models.Model):
         RECRUITER = "RECRUITER", "Recruiter"
         ADMINISTRATOR = "ADMINISTRATOR", "Administrator"
 
+    class SectionVisibility(models.TextChoices):
+        PUBLIC = "PUBLIC", "Public (Visible to everyone)"
+        RECRUITERS = "RECRUITERS", "Recruiters Only"
+        PRIVATE = "PRIVATE", "Private (Only you can see it)"
+
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
     name = models.CharField(max_length=255)
     bio = models.TextField(blank=True)
@@ -17,6 +22,23 @@ class Profile(models.Model):
     email = models.EmailField(blank=True)
     resume = models.FileField(
         upload_to="user_resumes/", blank=True, null=True, help_text="Your default resume for one-click applications."
+    )
+    # Granular visibility settings for each profile section
+    skills_visibility = models.CharField(
+        max_length=20, choices=SectionVisibility.choices, default=SectionVisibility.RECRUITERS
+    )
+    education_visibility = models.CharField(
+        max_length=20, choices=SectionVisibility.choices, default=SectionVisibility.RECRUITERS
+    )
+    experience_visibility = models.CharField(
+        max_length=20, choices=SectionVisibility.choices, default=SectionVisibility.RECRUITERS
+    )
+    links_visibility = models.CharField(
+        max_length=20, choices=SectionVisibility.choices, default=SectionVisibility.PUBLIC
+    )
+    resume_visibility = models.CharField(
+        max_length=20, choices=SectionVisibility.choices, default=SectionVisibility.RECRUITERS,
+        help_text="Controls visibility of the resume download link on your profile."
     )
 
     def __str__(self):

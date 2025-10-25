@@ -16,18 +16,19 @@
                         <i class="fas fa-user-circle me-2"></i>Profile Information
                     </div>
                     <div class="card-body">
-                        {% for field in profile_form %}
-                            <div class="mb-3">
-                                <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
-                                {{ field }}
-                                {% if field.help_text %}
-                                    <div class="form-text">{{ field.help_text }}</div>
-                                {% endif %}
-                                {% for error in field.errors %}
-                                    <div class="text-danger small">{{ error }}</div>
-                                {% endfor %}
-                            </div>
-                        {% endfor %}
+                        {{ profile_form.name.as_field_group }}
+                        {{ profile_form.bio.as_field_group }}
+                        
+                        <div class="mb-3">
+                            <label for="{{ profile_form.resume.id_for_label }}" class="form-label">{{ profile_form.resume.label }}</label>
+                            {{ profile_form.resume }}
+                            <div class="form-text">{{ profile_form.resume.help_text }}</div>
+                        </div>
+
+                        <div class="row align-items-center">
+                            <div class="col-sm-3"><label for="{{ profile_form.resume_visibility.id_for_label }}" class="form-label fw-medium mb-0">Resume Visibility</label></div>
+                            <div class="col-sm-9">{{ profile_form.resume_visibility }}</div>
+                        </div>
                     </div>
                 </div>
 
@@ -35,12 +36,18 @@
                 <div class="card shadow-sm mb-4">
                     <div class="card-header bg-dark text-white fw-bold d-flex justify-content-between align-items-center">
                         <div><i class="fas fa-cogs me-2"></i>Skills</div>
-                        <button type="button" class="btn btn-sm btn-outline-light" 
-                                hx-get="{% url 'manage_form_rows' formset_name='skills' %}" 
-                                hx-target="#skills-forms" 
-                                hx-swap="beforeend">
-                            <i class="fas fa-plus-circle me-1"></i>Add
-                        </button>
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="d-flex align-items-center gap-2">
+                                <label for="{{ profile_form.skills_visibility.id_for_label }}" class="mb-0 small fw-normal">Visibility:</label>
+                                {{ profile_form.skills_visibility }}
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-light" 
+                                    hx-get="{% url 'manage_form_rows' formset_name='skills' %}" 
+                                    hx-target="#skills-forms" 
+                                    hx-swap="beforeend">
+                                <i class="fas fa-plus-circle me-1"></i>Add
+                            </button>
+                        </div>
                     </div>
                     <div class="card-body">
                         {{ skill_formset.management_form }}
@@ -56,12 +63,18 @@
                 <div class="card shadow-sm mb-4">
                     <div class="card-header bg-dark text-white fw-bold d-flex justify-content-between align-items-center">
                         <div><i class="fas fa-graduation-cap me-2"></i>Education</div>
-                        <button type="button" class="btn btn-sm btn-outline-light"
-                                hx-get="{% url 'manage_form_rows' formset_name='education' %}"
-                                hx-target="#education-forms"
-                                hx-swap="beforeend">
-                            <i class="fas fa-plus-circle me-1"></i>Add
-                        </button>
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="d-flex align-items-center gap-2">
+                                <label for="{{ profile_form.education_visibility.id_for_label }}" class="mb-0 small fw-normal">Visibility:</label>
+                                {{ profile_form.education_visibility }}
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-light"
+                                    hx-get="{% url 'manage_form_rows' formset_name='education' %}"
+                                    hx-target="#education-forms"
+                                    hx-swap="beforeend">
+                                <i class="fas fa-plus-circle me-1"></i>Add
+                            </button>
+                        </div>
                     </div>
                     <div class="card-body">
                         {{ education_formset.management_form }}
@@ -77,12 +90,18 @@
                 <div class="card shadow-sm mb-4">
                     <div class="card-header bg-dark text-white fw-bold d-flex justify-content-between align-items-center">
                         <div><i class="fas fa-briefcase me-2"></i>Experience</div>
-                        <button type="button" class="btn btn-sm btn-outline-light"
-                                hx-get="{% url 'manage_form_rows' formset_name='experience' %}"
-                                hx-target="#experience-forms"
-                                hx-swap="beforeend">
-                            <i class="fas fa-plus-circle me-1"></i>Add
-                        </button>
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="d-flex align-items-center gap-2">
+                                <label for="{{ profile_form.experience_visibility.id_for_label }}" class="mb-0 small fw-normal">Visibility:</label>
+                                {{ profile_form.experience_visibility }}
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-light"
+                                    hx-get="{% url 'manage_form_rows' formset_name='experience' %}"
+                                    hx-target="#experience-forms"
+                                    hx-swap="beforeend">
+                                <i class="fas fa-plus-circle me-1"></i>Add
+                            </button>
+                        </div>
                     </div>
                     <div class="card-body">
                         {{ experience_formset.management_form }}
@@ -98,12 +117,18 @@
                 <div class="card shadow-sm mb-4">
                     <div class="card-header bg-dark text-white fw-bold d-flex justify-content-between align-items-center">
                         <div><i class="fas fa-link me-2"></i>Links</div>
-                        <button type="button" class="btn btn-sm btn-outline-light"
-                                hx-get="{% url 'manage_form_rows' formset_name='links' %}"
-                                hx-target="#links-forms"
-                                hx-swap="beforeend">
-                            <i class="fas fa-plus-circle me-1"></i>Add
-                        </button>
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="d-flex align-items-center gap-2">
+                                <label for="{{ profile_form.links_visibility.id_for_label }}" class="mb-0 small fw-normal">Visibility:</label>
+                                {{ profile_form.links_visibility }}
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-light"
+                                    hx-get="{% url 'manage_form_rows' formset_name='links' %}"
+                                    hx-target="#links-forms"
+                                    hx-swap="beforeend">
+                                <i class="fas fa-plus-circle me-1"></i>Add
+                            </button>
+                        </div>
                     </div>
                     <div class="card-body">
                         {{ link_formset.management_form }}

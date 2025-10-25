@@ -36,11 +36,29 @@ class CustomUserCreationForm(UserCreationForm):
 class ProfileForm(forms.ModelForm):
     class Meta:
         model = Profile
-        fields = ["name", "bio", "resume"]
+        fields = [
+            "name",
+            "bio",
+            "resume",
+            "skills_visibility",
+            "education_visibility",
+            "experience_visibility",
+            "links_visibility",
+            "resume_visibility",
+        ]
         widgets = {
             "name": forms.TextInput(attrs={"class": "form-control"}),
             "bio": forms.Textarea(attrs={"class": "form-control", "rows": 4}),
             "resume": forms.FileInput(attrs={"class": "form-control"}),
+            "skills_visibility": forms.Select(attrs={"class": "form-select form-select-sm"}),
+            "education_visibility": forms.Select(attrs={"class": "form-select form-select-sm"}),
+            "experience_visibility": forms.Select(attrs={"class": "form-select form-select-sm"}),
+            "links_visibility": forms.Select(attrs={"class": "form-select form-select-sm"}),
+            "resume_visibility": forms.Select(attrs={"class": "form-select"}), # Keep this one normal size
+        }
+        help_texts = {
+            "resume": "Your default resume for one-click applications. Its visibility on your profile is controlled below.",
+            "resume_visibility": "Control who can see the download link for your resume on your profile page.",
         }
 
 

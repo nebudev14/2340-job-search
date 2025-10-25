@@ -72,7 +72,39 @@ def profile_view(request, username):
     user_to_view = get_object_or_404(User, username=username)
     profile = get_object_or_404(Profile, user=user_to_view)
 
-    return render(request, "accounts/profile_page.html", {"profile": profile})
+    # Determine who is viewing the profile
+    is_owner = request.user == user_to_view
+    is_recruiter_or_admin = (
+        request.user.is_authenticated
+        and hasattr(request.user, "profile")
+        and request.user.profile.role
+        in [Profile.Role.RECRUITER, Profile.Role.ADMINISTRATOR]
+    )
+
+    # Determine visibility for each section based on the viewer's role
+    def can_view_section(visibility_setting):
+        if is_owner:
+            return True
+        if visibility_setting == Profile.SectionVisibility.PUBLIC:
+            return True
+        if (
+            visibility_setting == Profile.SectionVisibility.RECRUITERS
+            and is_recruiter_or_admin
+        ):
+            return True
+        return False
+
+    section_visibility = {
+        "skills": can_view_section(profile.skills_visibility),
+        "education": can_view_section(profile.education_visibility),
+        "experience": can_view_section(profile.experience_visibility),
+        "links": can_view_section(profile.links_visibility),
+        "resume": can_view_section(profile.resume_visibility),
+    }
+
+    context = {"profile": profile, "section_visibility": section_visibility}
+
+    return render(request, "accounts/profile_page.html", context)
 
 
 @login_required
