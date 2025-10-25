@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
 from django.http import HttpResponseForbidden
 from django.http import JsonResponse, HttpResponse
-from accounts.models import Profile
+from accounts.models import Profile, Skill
 import csv
 from django.utils import timezone
 from math import radians, sin, cos, sqrt, atan2
@@ -12,6 +12,35 @@ from django.db.models import Q
 from .models import Job, Company, JobApplication
 from django.urls import reverse
 from .forms import JobApplicationForm, JobForm
+
+
+def get_recommended_jobs(user):
+    """
+    Get job recommendations for a job seeker based on their skills.
+    Returns jobs that match the user's skills in the job description or requirements.
+    """
+    if not hasattr(user, 'profile'):
+        return []
+    
+    user_skills = Skill.objects.filter(profile=user.profile).values_list('name', flat=True)
+    
+    if not user_skills:
+        return []
+    
+    skill_query = Q()
+    for skill in user_skills:
+        skill_query |= Q(description__icontains=skill) | Q(requirements__icontains=skill)
+    
+    applied_job_ids = JobApplication.objects.filter(applicant=user).values_list('job_id', flat=True)
+    
+    recommended_jobs = Job.objects.filter(
+        is_active=True
+    ).filter(
+        skill_query
+    ).exclude(
+        id__in=applied_job_ids
+    ).order_by('-created_at')[:10]      
+    return recommended_jobs
 
 
 def is_recruiter(user):
@@ -28,11 +57,15 @@ def is_recruiter(user):
 
 
 def index(request):
-    # Get featured jobs (latest 3 active jobs)
     featured_jobs = Job.objects.filter(is_active=True)[:3]
+    
+    recommended_jobs = []
+    if request.user.is_authenticated and hasattr(request.user, 'profile') and request.user.profile.role == Profile.Role.JOB_SEEKER:
+        recommended_jobs = get_recommended_jobs(request.user)
 
     template_data = {
         "featured_jobs": featured_jobs,
+        "recommended_jobs": recommended_jobs,
     }
     return render(request, "home/index.html", {"template_data": template_data})
 
