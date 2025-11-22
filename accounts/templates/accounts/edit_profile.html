@@ -26,151 +26,163 @@
                 {{ profile_form.latitude }}
                 {{ profile_form.longitude }}
 
-                <!-- Profile Information Section -->
-                <div class="card shadow-sm mb-4">
-                    <div class="card-header bg-dark text-white fw-bold d-flex justify-content-between align-items-center">
-                        <div><i class="fas fa-user-circle me-2"></i>Profile Information</div>
-                        <div class="d-flex align-items-center gap-3">
-                            <div class="d-flex align-items-center gap-2">
-                                <label for="{{ profile_form.resume_visibility.id_for_label }}" class="mb-0 small fw-normal">Resume Visibility:</label>
-                                {{ profile_form.resume_visibility }}
+                <!-- Tab Navigation -->
+                <ul class="nav nav-tabs nav-fill mb-4" id="profileTab" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="profile-info-tab" data-bs-toggle="tab" data-bs-target="#profile-info-pane" type="button" role="tab" aria-controls="profile-info-pane" aria-selected="true"><i class="fas fa-user-circle me-2"></i>Profile</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="skills-tab" data-bs-toggle="tab" data-bs-target="#skills-pane" type="button" role="tab" aria-controls="skills-pane" aria-selected="false"><i class="fas fa-cogs me-2"></i>Skills</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="education-tab" data-bs-toggle="tab" data-bs-target="#education-pane" type="button" role="tab" aria-controls="education-pane" aria-selected="false"><i class="fas fa-graduation-cap me-2"></i>Education</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="experience-tab" data-bs-toggle="tab" data-bs-target="#experience-pane" type="button" role="tab" aria-controls="experience-pane" aria-selected="false"><i class="fas fa-briefcase me-2"></i>Experience</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="links-tab" data-bs-toggle="tab" data-bs-target="#links-pane" type="button" role="tab" aria-controls="links-pane" aria-selected="false"><i class="fas fa-link me-2"></i>Links</button>
+                    </li>
+                </ul>
+
+                <!-- Tab Content -->
+                <div class="tab-content" id="profileTabContent">
+                    <!-- Profile Information Pane -->
+                    <div class="tab-pane fade show active" id="profile-info-pane" role="tabpanel" aria-labelledby="profile-info-tab">
+                        <div class="card shadow-sm">
+                            <div class="card-body p-4">
+                                {{ profile_form.name.as_field_group }}
+                                {{ profile_form.bio.as_field_group }}
+                                <div class="mb-3">
+                                    <div class="mb-1">
+                                        {{ profile_form.location.label_tag }}                                     
+                                    </div>
+                                    <div class="input-group">
+                                        <span id="center-on-me-btn" class="input-group-text" title="Center map on your location" style="cursor: pointer;">
+                                            <i class="fas fa-map-marker-alt"></i></span>
+                                        {{ profile_form.location }}
+                                    </div>
+                                    <div id="location-picker-map"></div>
+                                    <small class="form-text text-muted">Enter a general location name, then click the map to set the exact position.</small>
+                                </div>
+                                <hr>
+                                <div class="row align-items-center">
+                                    <div class="col-md-6 mb-3 mb-md-0">
+                                        <label for="{{ profile_form.resume.id_for_label }}" class="form-label fw-medium">{{ profile_form.resume.label }}</label>
+                                        <div class="input-group">
+                                            {{ profile_form.resume }}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="{{ profile_form.resume_visibility.id_for_label }}" class="form-label fw-medium">Resume Visibility</label>
+                                        {{ profile_form.resume_visibility }}
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
-                    <div class="card-body">
-                        {{ profile_form.name.as_field_group }}
-                        {{ profile_form.bio.as_field_group }}
 
-                        <div class="mb-3">
-                            <div class="d-flex justify-content-between align-items-center mb-1">
-                                {{ profile_form.location.label_tag }}
-                                <button type="button" id="center-on-me-btn" class="btn btn-sm btn-outline-secondary" title="Center map on your location">
-                                    <i class="fas fa-crosshairs me-1"></i>Center on me
+                    <!-- Skills Pane -->
+                    <div class="tab-pane fade" id="skills-pane" role="tabpanel" aria-labelledby="skills-tab">
+                        <div class="card shadow-sm">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center gap-2">
+                                    <label for="{{ profile_form.skills_visibility.id_for_label }}" class="mb-0 small fw-bold">Visibility:</label>
+                                    {{ profile_form.skills_visibility }}
+                                </div>
+                                <button type="button" class="btn btn-sm btn-dark" 
+                                        hx-get="{% url 'manage_form_rows' formset_name='skills' %}" 
+                                        hx-target="#skills-forms" 
+                                        hx-swap="beforeend">
+                                    <i class="fas fa-plus-circle me-1"></i>Add Skill
                                 </button>
                             </div>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="fas fa-map-marker-alt"></i></span>
-                                {{ profile_form.location }}
-                            </div>
-                            <div id="location-picker-map"></div>
-                            <small class="form-text text-muted">
-                                Enter a general location name above, then click the map to set the exact position.
-                            </small>
-                        </div>
-                        
-                        <div class="mb-2">
-                            <label for="{{ profile_form.resume.id_for_label }}" class="form-label fw-medium">{{ profile_form.resume.label }}</label>
-                            <div class="input-group">
-                                {{ profile_form.resume }}
+                            <div class="card-body">
+                                {{ skill_formset.management_form }}
+                                <div id="skills-forms">
+                                    {% for form in skill_formset %}
+                                        {% include 'partials/form_row.html' with form=form prefix='skills' %}
+                                    {% endfor %}
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- Skills Section -->
-                <div class="card shadow-sm mb-4">
-                    <div class="card-header bg-dark text-white fw-bold d-flex justify-content-between align-items-center">
-                        <div><i class="fas fa-cogs me-2"></i>Skills</div>
-                        <div class="d-flex align-items-center gap-3">
-                            <div class="d-flex align-items-center gap-2">
-                                <label for="{{ profile_form.skills_visibility.id_for_label }}" class="mb-0 small fw-normal">Visibility:</label>
-                                {{ profile_form.skills_visibility }}
+                    <!-- Education Pane -->
+                    <div class="tab-pane fade" id="education-pane" role="tabpanel" aria-labelledby="education-tab">
+                        <div class="card shadow-sm">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center gap-2">
+                                    <label for="{{ profile_form.education_visibility.id_for_label }}" class="mb-0 small fw-bold">Visibility:</label>
+                                    {{ profile_form.education_visibility }}
+                                </div>
+                                <button type="button" class="btn btn-sm btn-dark"
+                                        hx-get="{% url 'manage_form_rows' formset_name='education' %}"
+                                        hx-target="#education-forms"
+                                        hx-swap="beforeend">
+                                    <i class="fas fa-plus-circle me-1"></i>Add Education
+                                </button>
                             </div>
-                            <button type="button" class="btn btn-sm btn-outline-light" 
-                                    hx-get="{% url 'manage_form_rows' formset_name='skills' %}" 
-                                    hx-target="#skills-forms" 
-                                    hx-swap="beforeend">
-                                <i class="fas fa-plus-circle me-1"></i>Add
-                            </button>
+                            <div class="card-body">
+                                {{ education_formset.management_form }}
+                                <div id="education-forms">
+                                    {% for form in education_formset %}
+                                        {% include 'partials/form_row.html' with form=form prefix='education' %}
+                                    {% endfor %}
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div class="card-body">
-                        {{ skill_formset.management_form }}
-                        <div id="skills-forms">
-                            {% for form in skill_formset %}
-                                {% include 'partials/form_row.html' with form=form prefix='skills' %}
-                            {% endfor %}
-                        </div>
-                    </div>
-                </div>
 
-                <!-- Education Section -->
-                <div class="card shadow-sm mb-4">
-                    <div class="card-header bg-dark text-white fw-bold d-flex justify-content-between align-items-center">
-                        <div><i class="fas fa-graduation-cap me-2"></i>Education</div>
-                        <div class="d-flex align-items-center gap-3">
-                            <div class="d-flex align-items-center gap-2">
-                                <label for="{{ profile_form.education_visibility.id_for_label }}" class="mb-0 small fw-normal">Visibility:</label>
-                                {{ profile_form.education_visibility }}
+                    <!-- Experience Pane -->
+                    <div class="tab-pane fade" id="experience-pane" role="tabpanel" aria-labelledby="experience-tab">
+                        <div class="card shadow-sm">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center gap-2">
+                                    <label for="{{ profile_form.experience_visibility.id_for_label }}" class="mb-0 small fw-bold">Visibility:</label>
+                                    {{ profile_form.experience_visibility }}
+                                </div>
+                                <button type="button" class="btn btn-sm btn-dark"
+                                        hx-get="{% url 'manage_form_rows' formset_name='experience' %}"
+                                        hx-target="#experience-forms"
+                                        hx-swap="beforeend">
+                                    <i class="fas fa-plus-circle me-1"></i>Add Experience
+                                </button>
                             </div>
-                            <button type="button" class="btn btn-sm btn-outline-light"
-                                    hx-get="{% url 'manage_form_rows' formset_name='education' %}"
-                                    hx-target="#education-forms"
-                                    hx-swap="beforeend">
-                                <i class="fas fa-plus-circle me-1"></i>Add
-                            </button>
+                            <div class="card-body">
+                                {{ experience_formset.management_form }}
+                                <div id="experience-forms">
+                                    {% for form in experience_formset %}
+                                        {% include 'partials/form_row.html' with form=form prefix='experience' %}
+                                    {% endfor %}
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div class="card-body">
-                        {{ education_formset.management_form }}
-                        <div id="education-forms">
-                            {% for form in education_formset %}
-                                {% include 'partials/form_row.html' with form=form prefix='education' %}
-                            {% endfor %}
-                        </div>
-                    </div>
-                </div>
 
-                <!-- Experience Section -->
-                <div class="card shadow-sm mb-4">
-                    <div class="card-header bg-dark text-white fw-bold d-flex justify-content-between align-items-center">
-                        <div><i class="fas fa-briefcase me-2"></i>Experience</div>
-                        <div class="d-flex align-items-center gap-3">
-                            <div class="d-flex align-items-center gap-2">
-                                <label for="{{ profile_form.experience_visibility.id_for_label }}" class="mb-0 small fw-normal">Visibility:</label>
-                                {{ profile_form.experience_visibility }}
+                    <!-- Links Pane -->
+                    <div class="tab-pane fade" id="links-pane" role="tabpanel" aria-labelledby="links-tab">
+                        <div class="card shadow-sm">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center gap-2">
+                                    <label for="{{ profile_form.links_visibility.id_for_label }}" class="mb-0 small fw-bold">Visibility:</label>
+                                    {{ profile_form.links_visibility }}
+                                </div>
+                                <button type="button" class="btn btn-sm btn-dark"
+                                        hx-get="{% url 'manage_form_rows' formset_name='links' %}"
+                                        hx-target="#links-forms"
+                                        hx-swap="beforeend">
+                                    <i class="fas fa-plus-circle me-1"></i>Add Link
+                                </button>
                             </div>
-                            <button type="button" class="btn btn-sm btn-outline-light"
-                                    hx-get="{% url 'manage_form_rows' formset_name='experience' %}"
-                                    hx-target="#experience-forms"
-                                    hx-swap="beforeend">
-                                <i class="fas fa-plus-circle me-1"></i>Add
-                            </button>
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        {{ experience_formset.management_form }}
-                        <div id="experience-forms">
-                            {% for form in experience_formset %}
-                                {% include 'partials/form_row.html' with form=form prefix='experience' %}
-                            {% endfor %}
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Links Section -->
-                <div class="card shadow-sm mb-4">
-                    <div class="card-header bg-dark text-white fw-bold d-flex justify-content-between align-items-center">
-                        <div><i class="fas fa-link me-2"></i>Links</div>
-                        <div class="d-flex align-items-center gap-3">
-                            <div class="d-flex align-items-center gap-2">
-                                <label for="{{ profile_form.links_visibility.id_for_label }}" class="mb-0 small fw-normal">Visibility:</label>
-                                {{ profile_form.links_visibility }}
+                            <div class="card-body">
+                                {{ link_formset.management_form }}
+                                <div id="links-forms">
+                                    {% for form in link_formset %}
+                                        {% include 'partials/form_row.html' with form=form prefix='links' %}
+                                    {% endfor %}
+                                </div>
                             </div>
-                            <button type="button" class="btn btn-sm btn-outline-light"
-                                    hx-get="{% url 'manage_form_rows' formset_name='links' %}"
-                                    hx-target="#links-forms"
-                                    hx-swap="beforeend">
-                                <i class="fas fa-plus-circle me-1"></i>Add
-                            </button>
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        {{ link_formset.management_form }}
-                        <div id="links-forms">
-                            {% for form in link_formset %}
-                                {% include 'partials/form_row.html' with form=form prefix='links' %}
-                            {% endfor %}
                         </div>
                     </div>
                 </div>
