@@ -51,6 +51,7 @@
                             <td class="text-end">
                                 <div class="btn-group">
                                     <a href="{% url 'applicant_pipeline' job.id %}" class="btn btn-sm btn-outline-info" title="View Applicant Pipeline"><i class="fas fa-columns"></i></a>
+                                    <a href="{% url 'candidate_recommendations' job.id %}" class="btn btn-sm btn-outline-primary" title="Find Candidates"><i class="fas fa-users"></i></a>
                                     <a href="{% url 'edit_job' job.id %}" class="btn btn-sm btn-outline-secondary" title="Edit Job"><i class="fas fa-edit"></i></a>
                                     <form action="{% url 'toggle_job_status' job.id %}" method="POST" class="d-inline">
                                         {% csrf_token %}

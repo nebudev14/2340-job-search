@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+
+{% block title %}Candidate Recommendations - {{ job.title }}{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold">Candidate Recommendations</h2>
+            <p class="text-muted mb-0">Showing potential candidates for: <a href="{% url 'job_detail' job.id %}" class="text-decoration-none">{{ job.title }}</a></p>
+        </div>
+        <a href="{% url 'my_jobs' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Back to My Jobs
+        </a>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-body">
+            {% if candidates %}
+                <div class="list-group list-group-flush">
+                    {% for profile in candidates %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center py-3">
+                            <div class="d-flex align-items-center">
+                                <div>
+                                    <h5 class="mb-0">
+                                        <a href="{% url 'accounts.profile_view' profile.user.username %}" class="text-decoration-none">{{ profile.name|default:profile.user.username }}</a>
+                                    </h5>
+                                    <p class="mb-1 text-muted">{{ profile.headline|truncatechars:80 }}</p>
+                                    {% if profile.skills.all %}
+                                        <div class="small">
+                                            {% for skill in profile.skills.all|slice:":5" %}
+                                                <span class="badge bg-light text-dark border">{{ skill.name }}</span>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <a href="{% url 'accounts.profile_view' profile.user.username %}" class="btn btn-sm btn-outline-primary">View Profile</a>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-user-slash fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No Recommendations Found</h5>
+                    <p class="text-muted">We couldn't find any candidates matching the skills for this job right now.</p>
+                </div>
+            {% endif %}
+        </div>
+
+        {% if candidates.has_other_pages %}
+            <div class="card-footer bg-white">
+                <nav aria-label="Candidate navigation">
+                    <ul class="pagination justify-content-center mb-0">
+                        {% if candidates.has_previous %}<li class="page-item"><a class="page-link" href="?page={{ candidates.previous_page_number }}">Previous</a></li>{% endif %}
+                        <li class="page-item disabled"><span class="page-link">Page {{ candidates.number }} of {{ candidates.paginator.num_pages }}</span></li>
+                        {% if candidates.has_next %}<li class="page-item"><a class="page-link" href="?page={{ candidates.next_page_number }}">Next</a></li>{% endif %}
+                    </ul>
+                </nav>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock content %}

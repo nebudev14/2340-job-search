@@ -813,3 +813,47 @@ def toggle_search_notifications(request, search_id):
         messages.success(request, f"Notifications for '{saved_search.name}' {status_text}.")
     
     return redirect("saved_searches")
+
+
+@login_required
+@user_passes_test(is_recruiter, login_url="home.index")
+def candidate_recommendations(request, job_id):
+    """
+    Recommends candidates for a specific job based on skills matching.
+    """
+    job = get_object_or_404(Job, pk=job_id)
+
+    # Security check: ensure the user owns the job or is staff
+    if job.posted_by != request.user and not request.user.is_staff:
+        return HttpResponseForbidden("You are not allowed to view recommendations for this job.")
+
+    # Extract keywords from job title, description, and requirements
+    job_keywords = set((job.title + " " + job.description + " " + job.requirements).lower().split())
+
+    # Find candidates with matching skills
+    # This is a simple implementation. For better performance on large datasets,
+    # consider a more advanced search solution like Elasticsearch.
+    skill_query = Q()
+    for keyword in job_keywords:
+        # This can be slow if job_keywords is large.
+        # A more refined approach would be to extract specific skills from the job text first.
+        skill_query |= Q(skills__name__icontains=keyword)
+
+    # Find all job seekers who have NOT already applied to this job
+    applied_user_ids = JobApplication.objects.filter(job=job).values_list('applicant_id', flat=True)
+
+    recommended_candidates = Profile.objects.filter(
+        role=Profile.Role.JOB_SEEKER
+    ).filter(skill_query).exclude(
+        user__id__in=applied_user_ids
+    ).distinct().select_related('user')
+
+    paginator = Paginator(recommended_candidates, 10)
+    page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page_number)
+
+    context = {
+        "job": job,
+        "candidates": page_obj,
+    }
+    return render(request, "home/candidate_recommendations.html", context)
